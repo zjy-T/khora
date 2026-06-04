@@ -1,4 +1,4 @@
-# Mystic Atelier
+# Khora | 衡石
 
 A luxury metaphysical commerce experience — oriental crystal bracelets (手串)
 reframed for a discerning Western audience as instruments of **energetic
