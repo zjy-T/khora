@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="sphere" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#6080cc"/>
+      <stop offset="45%" stop-color="#1F4080"/>
+      <stop offset="100%" stop-color="#0a1a40"/>
+    </radialGradient>
+    <radialGradient id="inner" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.5"/>
+    </radialGradient>
+    <radialGradient id="hi" cx="35%" cy="28%" r="30%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#sphere)"/>
+  <!-- gold pyrite flecks -->
+  <circle cx="68" cy="85" r="3" fill="#d4af37" fill-opacity="0.75"/>
+  <circle cx="120" cy="72" r="2" fill="#d4af37" fill-opacity="0.65"/>
+  <circle cx="140" cy="110" r="3.5" fill="#d4af37" fill-opacity="0.7"/>
+  <circle cx="80" cy="130" r="2.5" fill="#d4af37" fill-opacity="0.6"/>
+  <circle cx="112" cy="140" r="2" fill="#d4af37" fill-opacity="0.55"/>
+  <circle cx="55" cy="118" r="2" fill="#d4af37" fill-opacity="0.5"/>
+  <circle cx="148" cy="85" r="1.5" fill="#d4af37" fill-opacity="0.6"/>
+  <!-- subtle white veining -->
+  <path d="M50 60 Q110 90 155 70" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-opacity="0.12"/>
+  <path d="M45 135 Q100 115 160 140" stroke="#ffffff" stroke-width="1" fill="none" stroke-opacity="0.1"/>
+  <circle cx="100" cy="100" r="96" fill="url(#inner)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#hi)"/>
+</svg>

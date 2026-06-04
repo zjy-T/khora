@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="sphere" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#6a5830"/>
+      <stop offset="45%" stop-color="#211a0c"/>
+      <stop offset="100%" stop-color="#060402"/>
+    </radialGradient>
+    <radialGradient id="inner" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.65"/>
+    </radialGradient>
+    <radialGradient id="hi" cx="35%" cy="28%" r="28%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B8923A" stop-opacity="0"/>
+      <stop offset="38%" stop-color="#D4AF37" stop-opacity="0.72"/>
+      <stop offset="62%" stop-color="#B8923A" stop-opacity="0.52"/>
+      <stop offset="100%" stop-color="#B8923A" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#sphere)"/>
+  <ellipse cx="100" cy="100" rx="96" ry="22" fill="url(#sheen)" transform="rotate(-18 100 100)"/>
+  <ellipse cx="100" cy="100" rx="96" ry="10" fill="#D4AF37" fill-opacity="0.18" transform="rotate(-18 100 100) translate(0 -30)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#inner)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#hi)"/>
+</svg>

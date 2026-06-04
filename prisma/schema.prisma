@@ -1,0 +1,41 @@
+// Mystic Atelier — data model
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/// A single crystal stone offered in the atelier.
+model Bead {
+  id                   String  @id @default(cuid())
+  slug                 String  @unique
+  name                 String // the 手串 stone name, e.g. "金曜石手串"
+  westernName          String // refined Western name, e.g. "Gold Sheen Obsidian"
+  metaphysicalProperty String // Protection | Fortune | Health | Harmony | Amplification | Clarity
+  description          String // evocative, upscale lore copy
+  color                String // hex accent used across the UI
+  price                Float
+  image                String // /beads/<slug>.jpg — centralized & swappable
+  origin               String // physical provenance
+  energyAlignment      String // short energetic alignment phrase
+
+  createdAt DateTime @default(now())
+}
+
+/// A composed bracelet — either an atelier preset or a community creation.
+model Bracelet {
+  id           String  @id @default(cuid())
+  name         String // custom bracelet name, e.g. "The Sovereign's Rest"
+  description  String
+  beadSequence Json // ordered array of bead slugs
+  totalPrice   Float
+  isCommunity  Boolean @default(false)
+  creatorName  String?
+
+  createdAt DateTime @default(now())
+}

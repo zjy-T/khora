@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="sphere" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#8888aa"/>
+      <stop offset="40%" stop-color="#3a3a50"/>
+      <stop offset="100%" stop-color="#0e0e18"/>
+    </radialGradient>
+    <radialGradient id="inner" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.55"/>
+    </radialGradient>
+    <radialGradient id="hi" cx="35%" cy="28%" r="28%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#sphere)"/>
+  <!-- black tourmaline needle inclusions -->
+  <line x1="72" y1="48" x2="88" y2="155" stroke="#05050c" stroke-width="2.5" stroke-opacity="0.7"/>
+  <line x1="90" y1="40" x2="102" y2="162" stroke="#05050c" stroke-width="1.8" stroke-opacity="0.6"/>
+  <line x1="108" y1="45" x2="116" y2="158" stroke="#05050c" stroke-width="2" stroke-opacity="0.65"/>
+  <line x1="120" y1="52" x2="130" y2="150" stroke="#05050c" stroke-width="1.5" stroke-opacity="0.55"/>
+  <circle cx="100" cy="100" r="96" fill="url(#inner)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#hi)"/>
+</svg>
