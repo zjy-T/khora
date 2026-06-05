@@ -99,21 +99,6 @@ body {
   }
 }
 
-/* ─── Bead plate exit animation ─────────────────────────────────────────── */
-@keyframes bead-lift-out {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -90%) scale(0.25);
-    opacity: 0;
-  }
-}
-.bead-exit {
-  animation: bead-lift-out 0.36s cubic-bezier(0.4, 0, 1, 1) forwards;
-}
-
 /* ─── Utilities ─────────────────────────────────────────────────────────── */
 @layer utilities {
   .tracking-luxe {
