@@ -13,10 +13,11 @@ import { AlchemistPanel } from "@/components/builder/AlchemistPanel";
 import { OraclePanel } from "@/components/builder/OraclePanel";
 import { DestinyPanel } from "@/components/builder/DestinyPanel";
 import { BraceletRadar } from "@/components/builder/BraceletRadar";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { BEAD_BY_SLUG, sequencePrice, sequenceDiameterMm } from "@/lib/beads";
 import type { Bead, DesignAgentResponse } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { useCart } from "@/components/cart/CartProvider";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -25,6 +26,7 @@ const FIT_ALLOWANCE_MM = 15;
 
 export function BuilderShell() {
   const { t, locale } = useI18n();
+  const { addItem, openPanel } = useCart();
   const [tab, setTab] = useState<BuilderTab>("curator");
   const [placements, setPlacements] = useState<BeadPlacement[]>([]);
   const [name, setName] = useState<string | null>(null);
@@ -85,6 +87,19 @@ export function BuilderShell() {
 
   const total = sequencePrice(placements.map((p) => p.slug));
 
+  const handleAcquire = useCallback(() => {
+    const slugs = placements.map((p) => p.slug);
+    if (slugs.length === 0) return;
+    addItem({
+      id: `custom-${slugs.join("-")}`,
+      kind: "custom",
+      name: name ?? t.builder.untitled,
+      price: total,
+      beadSequence: slugs,
+    });
+    openPanel("cart");
+  }, [placements, name, total, addItem, openPanel, t.builder.untitled]);
+
   // Bracelet capacity from wrist size
   const braceletMm = wristMm !== null ? wristMm + FIT_ALLOWANCE_MM : null;
   const usedMm = sequenceDiameterMm(placements.map((p) => p.slug));
@@ -134,10 +149,16 @@ export function BuilderShell() {
   }, [placements, generateWristPreview]);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 pb-28 pt-24 md:px-10 md:pt-28">
-      <TabBar active={tab} onChange={setTab} />
+    <>
+      {/* Sub-navigation bar — sits flush beneath the fixed top navbar */}
+      <div className="border-b border-hairline-soft pt-24 md:pt-28">
+        <div className="mx-auto max-w-[1760px] px-6 md:px-10 2xl:px-16">
+          <TabBar active={tab} onChange={setTab} />
+        </div>
+      </div>
 
-      <div className={`mt-8 grid gap-10 ${tab === "curator" ? "" : "lg:grid-cols-[1.05fr_0.95fr] lg:gap-16"}`}>
+      <div className="mx-auto max-w-[1760px] px-6 pb-28 pt-10 md:px-10 2xl:px-16">
+      <div className={`grid gap-10 ${tab === "curator" ? "" : "lg:grid-cols-[1.6fr_1fr] lg:gap-16"}`}>
         <div className="min-h-[30rem]">
           <motion.div
             key={tab}
@@ -221,6 +242,7 @@ export function BuilderShell() {
                 <div className="-mx-8 mt-6 mb-0">
                   <BraceletPreview
                     beads={placements}
+                    circumferenceMm={braceletMm}
                     onSelect={handlePreviewSelect}
                     removable={tab === "alchemist"}
                   />
@@ -273,13 +295,13 @@ export function BuilderShell() {
                       ${total.toLocaleString()}
                     </p>
                   </div>
-                  <ButtonLink
-                    href="/atelier"
+                  <Button
+                    onClick={handleAcquire}
+                    disabled={placements.length === 0}
                     variant={placements.length ? "solid" : "outline"}
-                    className={placements.length ? "" : "pointer-events-none opacity-40"}
                   >
                     {t.builder.acquire}
-                  </ButtonLink>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -288,6 +310,7 @@ export function BuilderShell() {
       </div>
 
       <BeadLoreSlideOver bead={loreBead} onClose={() => setLoreBead(null)} />
-    </div>
+      </div>
+    </>
   );
 }

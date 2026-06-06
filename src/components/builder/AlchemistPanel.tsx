@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Info, Plus, Trash2, Save, RotateCcw, GripVertical } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
-import { BEADS, BEAD_BY_SLUG } from "@/lib/beads";
-import type { Bead } from "@/lib/types";
+import { BEADS, BEAD_BY_SLUG, RESONANCE_ORDER, MATERIAL_ORDER } from "@/lib/beads";
+import type { Bead, Material, ResonanceTag } from "@/lib/types";
 import type { BeadPlacement } from "@/components/builder/BraceletPreview";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { localizeBead } from "@/lib/beads.i18n";
+import { FilterBar, type FilterGroup } from "@/components/builder/FilterBar";
 
 type SavedDesign = {
   id: string;
@@ -34,6 +35,27 @@ function persistSaved(designs: SavedDesign[]) {
 }
 
 const WRIST_OPTIONS = [140, 150, 160, 170, 180, 190, 200] as const;
+
+/** A numbered step header — guides the user through the 1-2-3 build flow. */
+function StepHeading({
+  n,
+  title,
+  hint,
+}: {
+  n: number;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-4">
+      <span className="font-serif text-3xl leading-none text-gold/60">{n}</span>
+      <div>
+        <h3 className="font-serif text-xl text-bone md:text-2xl">{title}</h3>
+        <p className="mt-1 text-xs leading-relaxed text-mist">{hint}</p>
+      </div>
+    </div>
+  );
+}
 
 type Props = {
   placements: BeadPlacement[];
@@ -71,12 +93,105 @@ export function AlchemistPanel({
   const { t, locale } = useI18n();
   const [savedDesigns, setSavedDesigns] = useState<SavedDesign[]>([]);
   const [justSaved, setJustSaved] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string[]>>({
+    resonance: [],
+    material: [],
+    size: [],
+  });
+  const [sortBy, setSortBy] = useState("featured");
   const dragKey = useRef<string | null>(null);
   const dragOverKey = useRef<string | null>(null);
 
   useEffect(() => {
     setSavedDesigns(loadSaved());
   }, []);
+
+  // Filter facets, derived from the catalog so they track the dataset.
+  const resonanceValues = RESONANCE_ORDER.filter((p) =>
+    BEADS.some((b) => b.resonance.includes(p)),
+  ) as ResonanceTag[];
+  const materialValues = MATERIAL_ORDER.filter((m) =>
+    BEADS.some((b) => b.material === m),
+  ) as Material[];
+  const sizeValues = [...new Set(BEADS.map((b) => b.diameterMm))].sort(
+    (a, b) => a - b,
+  );
+
+  const toggleFilter = (groupId: string, value: string) =>
+    setFilters((prev) => {
+      const cur = prev[groupId] ?? [];
+      return {
+        ...prev,
+        [groupId]: cur.includes(value)
+          ? cur.filter((v) => v !== value)
+          : [...cur, value],
+      };
+    });
+
+  const resetFilters = () => {
+    setFilters({ resonance: [], material: [], size: [] });
+    setSortBy("featured");
+  };
+
+  const sortOptions = [
+    { value: "featured", label: t.builder.filters.sortFeatured },
+    { value: "price-asc", label: t.builder.filters.sortPriceAsc },
+    { value: "price-desc", label: t.builder.filters.sortPriceDesc },
+    { value: "size-asc", label: t.builder.filters.sortSizeAsc },
+    { value: "size-desc", label: t.builder.filters.sortSizeDesc },
+    { value: "name-asc", label: t.builder.filters.sortNameAsc },
+  ];
+
+  const filteredBeads = BEADS.filter((bead) => {
+    const res = filters.resonance;
+    const mat = filters.material;
+    const sz = filters.size;
+    const okRes = res.length === 0 || bead.resonance.some((r) => res.includes(r));
+    const okMat = mat.length === 0 || mat.includes(bead.material);
+    const okSize = sz.length === 0 || sz.includes(String(bead.diameterMm));
+    return okRes && okMat && okSize;
+  });
+
+  const sortedBeads = [...filteredBeads].sort((a, b) => {
+    switch (sortBy) {
+      case "price-asc":
+        return a.price - b.price;
+      case "price-desc":
+        return b.price - a.price;
+      case "size-asc":
+        return a.diameterMm - b.diameterMm;
+      case "size-desc":
+        return b.diameterMm - a.diameterMm;
+      case "name-asc":
+        return a.westernName.localeCompare(b.westernName);
+      default:
+        return 0; // featured = catalog order
+    }
+  });
+
+  const filterGroups: FilterGroup[] = [
+    {
+      id: "resonance",
+      label: t.builder.filters.resonance,
+      options: resonanceValues.map((p) => ({
+        value: p,
+        label: t.properties[p],
+      })),
+    },
+    {
+      id: "material",
+      label: t.builder.filters.material,
+      options: materialValues.map((m) => ({
+        value: m,
+        label: t.materials[m],
+      })),
+    },
+    {
+      id: "size",
+      label: t.builder.filters.size,
+      options: sizeValues.map((mm) => ({ value: String(mm), label: `${mm}mm` })),
+    },
+  ];
 
   function saveDesign() {
     if (placements.length === 0) return;
@@ -104,95 +219,124 @@ export function AlchemistPanel({
     persistSaved(updated);
   }
 
-  // ── Wrist size gate ─────────────────────────────────────────────────────────
-  if (wristMm === null) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="flex min-h-[28rem] flex-col items-center justify-center text-center"
-      >
-        <p className="eyebrow mb-6">Before you begin</p>
-        <h2 className="display mb-3 text-3xl text-bone md:text-4xl">
-          What is your wrist size?
-        </h2>
-        <p className="mb-10 max-w-xs text-sm leading-relaxed text-mist">
-          We'll use this to tell you exactly how many stones fit your bracelet — and stop you before you go over.
-        </p>
-
-        <div className="flex flex-wrap justify-center gap-3">
-          {WRIST_OPTIONS.map((mm) => (
-            <button
-              key={mm}
-              onClick={() => onSetWristMm(mm)}
-              className="group flex flex-col items-center border border-hairline-soft px-6 py-4 transition-all duration-300 hover:border-gold hover:bg-charcoal/20"
-            >
-              <span className="font-serif text-2xl text-bone transition-colors group-hover:text-gold">
-                {mm / 10}
-              </span>
-              <span className="mt-1 text-[0.55rem] uppercase tracking-luxe text-faint">
-                cm
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <p className="mt-8 text-[0.65rem] text-faint">
-          Measure the circumference of your wrist with a soft tape.
-        </p>
-      </motion.div>
-    );
-  }
-
   // ── Capacity bar ────────────────────────────────────────────────────────────
   const capacityPct = braceletMm ? Math.min((usedMm / braceletMm) * 100, 100) : 0;
   const nearLimit = braceletMm && usedMm >= braceletMm - 15 && !atCapacity;
 
   return (
-    <div className="space-y-8">
-      {/* Capacity indicator + wrist size */}
-      <div className="border border-hairline-soft p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[0.6rem] uppercase tracking-luxe text-mist">
-              {locale === "zh" ? "手腕" : "Wrist"} {wristMm! / 10}cm
-            </span>
+    <div className="space-y-12">
+      {/* ── Step 1 · Wrist size (optional, non-blocking) ───────────────────────── */}
+      <section className="space-y-5">
+        <StepHeading
+          n={1}
+          title={t.builder.steps.sizeTitle}
+          hint={t.builder.steps.sizeHint}
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          {WRIST_OPTIONS.map((mm) => {
+            const active = wristMm === mm;
+            return (
+              <button
+                key={mm}
+                onClick={() => onSetWristMm(mm)}
+                aria-pressed={active}
+                className={`flex flex-col items-center border px-4 py-2 transition-all duration-300 ${
+                  active
+                    ? "border-gold bg-charcoal/30"
+                    : "border-hairline-soft hover:border-gold/60 hover:bg-charcoal/15"
+                }`}
+              >
+                <span
+                  className={`font-serif text-lg transition-colors ${
+                    active ? "text-gold" : "text-bone"
+                  }`}
+                >
+                  {mm / 10}
+                </span>
+                <span className="text-[0.5rem] uppercase tracking-luxe text-faint">
+                  cm
+                </span>
+              </button>
+            );
+          })}
+          {wristMm !== null && (
             <button
               onClick={onResetWristMm}
-              className="text-[0.55rem] uppercase tracking-luxe text-faint/60 underline decoration-dotted hover:text-faint transition-colors"
+              className="ml-1 text-[0.55rem] uppercase tracking-luxe text-faint/60 underline decoration-dotted transition-colors hover:text-faint"
             >
-              change
+              {t.builder.steps.clearSize}
             </button>
+          )}
+        </div>
+
+        {/* Capacity indicator — appears once a size is chosen */}
+        {wristMm !== null && (
+          <div className="border border-hairline-soft p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[0.6rem] uppercase tracking-luxe text-mist">
+                {locale === "zh" ? "手腕" : "Wrist"} {wristMm / 10}cm
+              </span>
+              <span
+                className={`text-[0.6rem] uppercase tracking-luxe ${
+                  atCapacity ? "text-clay" : nearLimit ? "text-gold" : "text-mist"
+                }`}
+              >
+                {atCapacity
+                  ? locale === "zh"
+                    ? "已满"
+                    : "Full"
+                  : `${usedMm} / ${braceletMm}mm`}
+              </span>
+            </div>
+            <div className="h-[2px] w-full overflow-hidden rounded-full bg-hairline">
+              <motion.div
+                className={`h-full rounded-full transition-colors duration-500 ${
+                  atCapacity ? "bg-clay" : nearLimit ? "bg-gold" : "bg-bone/40"
+                }`}
+                animate={{ width: `${capacityPct}%` }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
           </div>
-          <span className={`text-[0.6rem] uppercase tracking-luxe ${
-            atCapacity ? "text-clay" : nearLimit ? "text-gold" : "text-mist"
-          }`}>
-            {atCapacity
-              ? (locale === "zh" ? "已满" : "Full")
-              : `${usedMm} / ${braceletMm}mm`}
-          </span>
-        </div>
-        {/* Progress bar */}
-        <div className="h-[2px] w-full bg-hairline rounded-full overflow-hidden">
-          <motion.div
-            className={`h-full rounded-full transition-colors duration-500 ${
-              atCapacity ? "bg-clay" : nearLimit ? "bg-gold" : "bg-bone/40"
-            }`}
-            animate={{ width: `${capacityPct}%` }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </div>
-      </div>
+        )}
+      </section>
 
-      <div>
-        <p className="text-sm leading-relaxed text-mist">
-          {t.builder.alchemistIntro}
-        </p>
+      {/* ── Step 2 · Add your stones ───────────────────────────────────────────── */}
+      <section className="space-y-5">
+        <StepHeading
+          n={2}
+          title={t.builder.steps.stonesTitle}
+          hint={t.builder.steps.stonesHint}
+        />
 
-        {/* Inventory */}
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {BEADS.map((bead) => {
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+          {/* Optional filter rail — off to the side, not a required step */}
+          <aside className="lg:sticky lg:top-28 lg:w-36 lg:shrink-0 lg:self-start">
+            <FilterBar
+              groups={filterGroups}
+              selected={filters}
+              onToggle={toggleFilter}
+              onReset={resetFilters}
+              resultLabel={t.builder.filters.stoneResults(filteredBeads.length)}
+              resetLabel={t.builder.filters.reset}
+              sort={{
+                label: t.builder.filters.sortBy,
+                options: sortOptions,
+                value: sortBy,
+                onChange: setSortBy,
+              }}
+            />
+          </aside>
+
+          {/* Inventory */}
+          <div className="flex-1">
+            {filteredBeads.length === 0 ? (
+              <p className="border border-dashed border-hairline-soft p-10 text-center text-xs text-faint">
+                {t.builder.filters.noneStones}
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                {sortedBeads.map((bead) => {
             const L = localizeBead(bead, locale);
             return (
               <div
@@ -211,7 +355,7 @@ export function AlchemistPanel({
                 <div className="text-center">
                   <p className="text-xs leading-tight text-bone">{L.title}</p>
                   <p className="mt-1 text-[0.55rem] uppercase tracking-luxe text-mist">
-                    {bead.metaphysicalProperty}
+                    {t.properties[bead.resonance[0]]}
                   </p>
                   <div className="mt-1 flex items-center justify-center gap-2">
                     <p className="text-[0.55rem] uppercase tracking-luxe text-faint">
@@ -236,16 +380,21 @@ export function AlchemistPanel({
               </div>
             );
           })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Current sequence */}
-      <div>
-        <div className="flex items-center justify-between">
-          <p className="eyebrow">
-            {t.builder.sequence} · {placements.length}
-          </p>
-          <div className="flex items-center gap-3">
+      {/* ── Step 3 · Arrange your bracelet ─────────────────────────────────────── */}
+      <section className="space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <StepHeading
+            n={3}
+            title={t.builder.steps.arrangeTitle}
+            hint={t.builder.steps.arrangeHint}
+          />
+          <div className="flex shrink-0 items-center gap-3 pt-1">
             {placements.length > 0 && (
               <>
                 <button
@@ -319,7 +468,7 @@ export function AlchemistPanel({
             })}
           </ul>
         )}
-      </div>
+      </section>
 
       {/* Saved designs */}
       <div>

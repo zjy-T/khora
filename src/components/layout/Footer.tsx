@@ -27,7 +27,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-hairline-soft bg-obsidian">
-      <div className="mx-auto max-w-[1400px] px-6 py-16 md:px-12">
+      <div className="mx-auto max-w-[1760px] px-6 py-16 md:px-10 2xl:px-16">
         <div className="grid gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
           <div>
             <p className="font-serif text-xl tracking-[0.25em] text-bone">

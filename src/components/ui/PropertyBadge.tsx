@@ -4,29 +4,29 @@ import {
   Shield,
   Coins,
   HeartPulse,
-  Scale,
-  Sparkles,
-  Eye,
+  TrendingUp,
+  Moon,
+  Users,
   Waves,
-  Heart,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
-import type { MetaphysicalProperty } from "@/lib/types";
+import type { ResonanceTag } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 
-const ICONS: Record<MetaphysicalProperty, LucideIcon> = {
-  Protection: Shield,
-  Fortune: Coins,
+const ICONS: Record<ResonanceTag, LucideIcon> = {
+  Wealth: Coins,
   Health: HeartPulse,
-  Harmony: Scale,
-  Amplification: Sparkles,
-  Clarity: Eye,
-  Serenity: Waves,
-  Love: Heart,
+  Career: TrendingUp,
+  Sleep: Moon,
+  Peace: Shield,
+  Relationships: Users,
+  Emotion: Waves,
+  Study: BookOpen,
 };
 
 type Props = {
-  property: MetaphysicalProperty;
+  property: ResonanceTag;
   className?: string;
 };
 

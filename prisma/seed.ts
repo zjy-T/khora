@@ -12,10 +12,25 @@ async function main() {
   console.log("⟡ Seeding the Mystic Atelier…");
 
   for (const bead of BEADS) {
+    // The catalog (src/lib/beads.ts) is the source of truth and now carries the
+    // multi-tag `resonance` + `material` taxonomy. The legacy DB schema keeps a
+    // single `metaphysicalProperty` column, so map the primary resonance onto it.
+    const row = {
+      slug: bead.slug,
+      name: bead.name,
+      westernName: bead.westernName,
+      metaphysicalProperty: bead.resonance[0],
+      description: bead.description,
+      color: bead.color,
+      price: bead.price,
+      image: bead.image,
+      origin: bead.origin,
+      energyAlignment: bead.energyAlignment,
+    };
     await prisma.bead.upsert({
       where: { slug: bead.slug },
-      update: { ...bead },
-      create: { ...bead },
+      update: row,
+      create: row,
     });
   }
   console.log(`  ✓ ${BEADS.length} stones inscribed`);

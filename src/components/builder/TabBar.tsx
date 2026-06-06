@@ -22,25 +22,25 @@ export function TabBar({
   ];
 
   return (
-    <div className="inline-flex border border-hairline-soft">
-      {tabs.map((tab, i) => {
+    <div className="-ml-4 flex flex-wrap items-center">
+      {tabs.map((tab) => {
         const isActive = active === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`relative px-5 py-2.5 text-[0.72rem] uppercase tracking-luxe transition-colors duration-300 ${
-              i > 0 ? "border-l border-hairline-soft" : ""
-            } ${isActive ? "text-bone" : "text-mist hover:text-bone/70"}`}
+            className={`relative px-4 py-4 text-[0.72rem] uppercase tracking-luxe transition-colors duration-300 ${
+              isActive ? "text-bone" : "text-mist hover:text-bone/70"
+            }`}
           >
+            <span className="relative z-10">{tab.label}</span>
             {isActive && (
               <motion.span
                 layoutId="seg-active"
-                className="absolute inset-0 bg-bone/[0.08]"
+                className="absolute inset-x-4 bottom-0 h-[1.5px] bg-bone"
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               />
             )}
-            <span className="relative z-10">{tab.label}</span>
           </button>
         );
       })}

@@ -42,6 +42,22 @@ const BEADS = [
   { slug: "rose-quartz",          name: "rose quartz",         desc: "soft blush-pink translucent rose quartz" },
   { slug: "tiger-eye",            name: "tiger eye",           desc: "golden-brown chatoyant tiger eye with silky bands" },
   { slug: "lapis-lazuli",         name: "lapis lazuli",        desc: "deep royal-blue lapis lazuli with gold pyrite flecks" },
+  { slug: "green-phantom",            name: "green phantom quartz",     desc: "clear quartz enclosing a mossy forest-green chlorite phantom pyramid suspended inside" },
+  { slug: "garnet",                   name: "garnet",                   desc: "deep wine-red translucent garnet, glassy and richly saturated" },
+  { slug: "red-rabbit-hair",          name: "red rabbit-hair quartz",   desc: "clear quartz filled with fine crimson-red hematite needle inclusions like soft red hair" },
+  { slug: "black-gold-super-seven",   name: "black gold super seven",   desc: "dark smoky-black super seven quartz with golden rutile glints and faint purple amethyst zones" },
+  { slug: "green-rabbit-hair",        name: "green rabbit-hair quartz", desc: "clear quartz filled with silky green actinolite fibre inclusions like fine green hair" },
+  { slug: "moonstone",                name: "moonstone",                desc: "milky white moonstone with a floating soft blue adularescent sheen" },
+  { slug: "prehnite",                 name: "prehnite",                 desc: "translucent pale grape-green prehnite with a soft waxy lustre" },
+  { slug: "grey-agate",               name: "grey agate",               desc: "polished grey agate with soft concentric smoke-grey banding, semi-opaque" },
+  { slug: "cinnabar",                 name: "cinnabar",                 desc: "deep vermilion-red cinnabar, opaque with a soft mineral sheen" },
+  { slug: "kunzite",                  name: "kunzite",                  desc: "translucent lilac-pink kunzite, glassy with faint internal striations" },
+  { slug: "strawberry-quartz",        name: "strawberry quartz",        desc: "rosy pink-red strawberry quartz with tiny speckled red inclusions" },
+  { slug: "rhodochrosite",            name: "rhodochrosite",            desc: "rose-pink and cream banded rhodochrosite with soft concentric bands" },
+  { slug: "purple-hair-super-seven",  name: "purple hair super seven",  desc: "deep violet-purple super seven quartz threaded with fine golden rutile hair inclusions" },
+  { slug: "white-phantom",            name: "white phantom quartz",     desc: "clear quartz holding pale white ghostly phantom layers suspended inside" },
+  { slug: "aquamarine",               name: "aquamarine",               desc: "transparent pale sea-blue aquamarine with glassy clarity" },
+  { slug: "purple-chalcedony",        name: "purple chalcedony",        desc: "smooth translucent violet-purple chalcedony, even-toned with a soft inner glow" },
 ];
 
 // ─── Bracelet designs ─────────────────────────────────────────────────────────

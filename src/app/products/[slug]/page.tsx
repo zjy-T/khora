@@ -5,8 +5,9 @@ import { ArrowLeft } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
 import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductResonance } from "@/components/products/ProductResonance";
+import { AcquireButton } from "@/components/cart/AcquireButton";
 import { CURATED_BRACELETS } from "@/lib/presets";
-import { BEAD_BY_SLUG, PROPERTY_COLORS } from "@/lib/beads";
+import { BEAD_BY_SLUG, RESONANCE_COLORS } from "@/lib/beads";
 import type { Bead } from "@/lib/types";
 
 const EDITORIAL: Record<string, { headline: string; tagline: string }> = {
@@ -143,9 +144,19 @@ export default async function ProductPage({
         <ProductResonance beadSequence={formula.beadSequence} />
 
         {/* CTA */}
-        <button className="mt-8 w-full border border-bone bg-bone py-4 font-sans text-[0.65rem] uppercase tracking-luxe text-obsidian transition-colors hover:bg-gold hover:border-gold">
-          Acquire This Piece
-        </button>
+        <div className="mt-8">
+          <AcquireButton
+            label="Acquire This Piece"
+            item={{
+              id: formula.id,
+              kind: "curated",
+              name: ed?.headline ?? formula.name,
+              price: formula.totalPrice,
+              beadSequence: formula.beadSequence,
+              slug,
+            }}
+          />
+        </div>
 
         <p className="mt-4 text-center text-[0.6rem] uppercase tracking-luxe text-faint">
           Made to order · Ships in 5–7 days
@@ -175,10 +186,10 @@ export default async function ProductPage({
                   <p
                     className="mt-0.5 text-[0.55rem] uppercase tracking-luxe"
                     style={{
-                      color: PROPERTY_COLORS[bead.metaphysicalProperty as keyof typeof PROPERTY_COLORS],
+                      color: RESONANCE_COLORS[bead.resonance[0]],
                     }}
                   >
-                    {bead.metaphysicalProperty}
+                    {bead.resonance[0]}
                   </p>
                   <p className="mt-0.5 text-[0.6rem] text-faint">
                     ×{count}

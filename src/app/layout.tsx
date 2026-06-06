@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
+import { CartProvider } from "@/components/cart/CartProvider";
+import { SidePanels } from "@/components/cart/SidePanels";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
@@ -46,9 +48,12 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-obsidian text-bone flex flex-col antialiased">
         <LanguageProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <CartProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <SidePanels />
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>

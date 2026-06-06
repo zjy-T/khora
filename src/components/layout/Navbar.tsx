@@ -7,11 +7,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingCart, Search, User } from "lucide-react";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { useCart } from "@/components/cart/CartProvider";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [cartCount] = useState(0);
+  const { count: cartCount, openPanel } = useCart();
   const pathname = usePathname();
   const { t } = useI18n();
 
@@ -45,7 +46,7 @@ export function Navbar() {
           : "border-b border-white/8 bg-transparent"
       }`}
     >
-      <nav className="mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center px-6 py-5 md:px-12">
+      <nav className="mx-auto grid max-w-[1760px] grid-cols-[1fr_auto_1fr] items-center px-6 py-5 md:px-10 2xl:px-16">
         {/* Left nav */}
         <div className="hidden items-center gap-10 md:flex">
           {leftLinks.map((l) => {
@@ -122,18 +123,21 @@ export function Navbar() {
           <LanguageToggle />
 
           <button
+            onClick={() => openPanel("search")}
             className={`transition-colors duration-300 ${solid ? "text-mist hover:text-bone" : "text-white/85 hover:text-white"}`}
             aria-label="Search"
           >
             <Search className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>
           <button
+            onClick={() => openPanel("profile")}
             className={`transition-colors duration-300 ${solid ? "text-mist hover:text-bone" : "text-white/85 hover:text-white"}`}
             aria-label="Account"
           >
             <User className="h-3.5 w-3.5" strokeWidth={1.5} />
           </button>
           <button
+            onClick={() => openPanel("cart")}
             className={`relative transition-colors duration-300 ${solid ? "text-mist hover:text-bone" : "text-white/85 hover:text-white"}`}
             aria-label={t.nav.cart}
           >
@@ -148,8 +152,24 @@ export function Navbar() {
 
         {/* Mobile right cluster */}
         <div className="flex items-center justify-end gap-4 md:hidden">
-          <button className={solid ? "text-mist" : "text-white/60"} aria-label={t.nav.cart}>
+          <button
+            onClick={() => openPanel("search")}
+            className={solid ? "text-mist" : "text-white/60"}
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={() => openPanel("cart")}
+            className={`relative ${solid ? "text-mist" : "text-white/60"}`}
+            aria-label={t.nav.cart}
+          >
             <ShoppingCart className="h-4 w-4" strokeWidth={1.5} />
+            {cartCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-bone text-[0.45rem] font-bold text-obsidian">
+                {cartCount}
+              </span>
+            )}
           </button>
           <LanguageToggle />
           <button

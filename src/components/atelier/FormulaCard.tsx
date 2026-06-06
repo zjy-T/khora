@@ -7,6 +7,7 @@ import { BeadOrb } from "@/components/beads/BeadOrb";
 import { BEAD_BY_SLUG } from "@/lib/beads";
 import type { BraceletFormula } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { useCart } from "@/components/cart/CartProvider";
 import { localizeBead } from "@/lib/beads.i18n";
 import { localizeBracelet } from "@/lib/presets.i18n";
 
@@ -57,6 +58,7 @@ export function FormulaCard({
   index: number;
 }) {
   const { t, locale } = useI18n();
+  const { addItem, openPanel } = useCart();
   const L = localizeBracelet(formula, locale);
   const stones = formula.beadSequence
     .map((s) => BEAD_BY_SLUG[s])
@@ -128,7 +130,19 @@ export function FormulaCard({
               ${formula.totalPrice.toLocaleString()}
             </p>
           </div>
-          <button className="inline-flex items-center gap-2.5 border border-hairline px-6 py-3.5 text-[0.7rem] uppercase tracking-luxe text-gold transition-all duration-500 hover:bg-gold hover:text-[#faf8f4]">
+          <button
+            onClick={() => {
+              addItem({
+                id: formula.id,
+                kind: "community",
+                name: L.name,
+                price: formula.totalPrice,
+                beadSequence: formula.beadSequence,
+              });
+              openPanel("cart");
+            }}
+            className="inline-flex items-center gap-2.5 border border-hairline px-6 py-3.5 text-[0.7rem] uppercase tracking-luxe text-gold transition-all duration-500 hover:bg-gold hover:text-[#faf8f4]"
+          >
             <ShoppingCart className="h-3.5 w-3.5" strokeWidth={1.5} />
             {t.atelier.purchase}
           </button>

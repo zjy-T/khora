@@ -120,6 +120,13 @@ body {
   }
 }
 
+/* Bead strung onto the bracelet preview — gentle pop as it lands. */
+@keyframes beadPop {
+  0%   { transform: scale(0.2); opacity: 0; }
+  60%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {

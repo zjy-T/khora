@@ -1,14 +1,16 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { BraceletLoop } from "@/components/ui/BraceletLoop";
 import { CURATED_BRACELETS } from "@/lib/presets";
-import { BEAD_BY_SLUG } from "@/lib/beads";
-import type { Bead, BraceletFormula, MetaphysicalProperty } from "@/lib/types";
+import { BEAD_BY_SLUG, RESONANCE_ORDER } from "@/lib/beads";
+import type { Bead, BraceletFormula, ResonanceTag } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { localizeBracelet } from "@/lib/presets.i18n";
+import { FilterBar, type FilterGroup } from "@/components/builder/FilterBar";
 
 function productSlug(id: string) {
   return id.replace("curated-", "");
@@ -17,16 +19,17 @@ function productSlug(id: string) {
 function dominantProperties(
   beadSequence: string[],
   topN = 3,
-): MetaphysicalProperty[] {
-  const counts: Partial<Record<MetaphysicalProperty, number>> = {};
+): ResonanceTag[] {
+  const counts: Partial<Record<ResonanceTag, number>> = {};
   for (const slug of beadSequence) {
     const bead = BEAD_BY_SLUG[slug];
     if (bead) {
-      counts[bead.metaphysicalProperty] =
-        (counts[bead.metaphysicalProperty] ?? 0) + 1;
+      for (const tag of bead.resonance) {
+        counts[tag] = (counts[tag] ?? 0) + 1;
+      }
     }
   }
-  return (Object.entries(counts) as [MetaphysicalProperty, number][])
+  return (Object.entries(counts) as [ResonanceTag, number][])
     .sort((a, b) => b[1] - a[1])
     .slice(0, topN)
     .map(([prop]) => prop);
@@ -104,13 +107,110 @@ function CuratorCard({
 export function CuratorPanel() {
   const { t } = useI18n();
 
+  // Per-preset facets, computed once.
+  const enriched = useMemo(
+    () =>
+      CURATED_BRACELETS.map((preset) => ({
+        preset,
+        props: dominantProperties(preset.beadSequence, 3),
+      })),
+    [],
+  );
+
+  // Resonance options = tags that are dominant in at least one piece.
+  const resonanceValues = useMemo(() => {
+    const present = new Set<ResonanceTag>();
+    enriched.forEach((i) => i.props.forEach((p) => present.add(p)));
+    return RESONANCE_ORDER.filter((p) => present.has(p));
+  }, [enriched]);
+
+  const [selected, setSelected] = useState<Record<string, string[]>>({
+    resonance: [],
+  });
+  const [sortBy, setSortBy] = useState("featured");
+
+  const toggle = (groupId: string, value: string) =>
+    setSelected((prev) => {
+      const cur = prev[groupId] ?? [];
+      return {
+        ...prev,
+        [groupId]: cur.includes(value)
+          ? cur.filter((v) => v !== value)
+          : [...cur, value],
+      };
+    });
+
+  const reset = () => {
+    setSelected({ resonance: [] });
+    setSortBy("featured");
+  };
+
+  const sortOptions = [
+    { value: "featured", label: t.builder.filters.sortFeatured },
+    { value: "price-asc", label: t.builder.filters.sortPriceAsc },
+    { value: "price-desc", label: t.builder.filters.sortPriceDesc },
+  ];
+
+  const filtered = enriched.filter(({ props }) => {
+    const res = selected.resonance;
+    return res.length === 0 || props.some((p) => res.includes(p));
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "price-asc":
+        return a.preset.totalPrice - b.preset.totalPrice;
+      case "price-desc":
+        return b.preset.totalPrice - a.preset.totalPrice;
+      default:
+        return 0;
+    }
+  });
+
+  const groups: FilterGroup[] = [
+    {
+      id: "resonance",
+      label: t.builder.filters.resonance,
+      options: resonanceValues.map((p) => ({ value: p, label: t.properties[p] })),
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <p className="text-sm leading-relaxed text-mist">{t.builder.curatorIntro}</p>
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {CURATED_BRACELETS.map((preset, idx) => (
-          <CuratorCard key={preset.id} preset={preset} index={idx} />
-        ))}
+
+      <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+        {/* Optional filter rail — off to the side, not a required step */}
+        <aside className="lg:sticky lg:top-28 lg:w-40 lg:shrink-0 lg:self-start">
+          <FilterBar
+            groups={groups}
+            selected={selected}
+            onToggle={toggle}
+            onReset={reset}
+            resultLabel={t.builder.filters.results(filtered.length)}
+            resetLabel={t.builder.filters.reset}
+            sort={{
+              label: t.builder.filters.sortBy,
+              options: sortOptions,
+              value: sortBy,
+              onChange: setSortBy,
+            }}
+          />
+        </aside>
+
+        <div className="flex-1">
+          {filtered.length === 0 ? (
+            <p className="border border-dashed border-hairline-soft p-10 text-center text-xs text-faint">
+              {t.builder.filters.none}
+            </p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {sorted.map(({ preset }, idx) => (
+                <CuratorCard key={preset.id} preset={preset} index={idx} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

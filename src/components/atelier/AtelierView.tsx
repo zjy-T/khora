@@ -5,25 +5,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FormulaCard } from "@/components/atelier/FormulaCard";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ButtonLink } from "@/components/ui/Button";
-import type { BraceletFormula } from "@/lib/types";
-import { BEAD_BY_SLUG, PROPERTY_ORDER } from "@/lib/beads";
+import type { BraceletFormula, ResonanceTag } from "@/lib/types";
+import { BEAD_BY_SLUG, RESONANCE_ORDER, RESONANCE_COLORS } from "@/lib/beads";
 import { useI18n } from "@/components/i18n/LanguageProvider";
-import type { MetaphysicalProperty } from "@/lib/types";
 
-/** Gather all properties that appear in a formula's bead sequence */
-function formulaProperties(formula: BraceletFormula): MetaphysicalProperty[] {
-  const props = formula.beadSequence
-    .map((s) => BEAD_BY_SLUG[s]?.metaphysicalProperty)
-    .filter(Boolean) as MetaphysicalProperty[];
+/** Gather all resonance tags that appear in a formula's bead sequence */
+function formulaProperties(formula: BraceletFormula): ResonanceTag[] {
+  const props = formula.beadSequence.flatMap(
+    (s) => BEAD_BY_SLUG[s]?.resonance ?? [],
+  );
   return [...new Set(props)];
 }
 
 export function AtelierView({ formulas }: { formulas: BraceletFormula[] }) {
   const { t } = useI18n();
-  const [activeFilter, setActiveFilter] = useState<MetaphysicalProperty | null>(null);
+  const [activeFilter, setActiveFilter] = useState<ResonanceTag | null>(null);
 
-  // Collect all properties present across all formulas
-  const allProperties = PROPERTY_ORDER.filter((p) =>
+  // Collect all resonance tags present across all formulas
+  const allProperties = RESONANCE_ORDER.filter((p) =>
     formulas.some((f) => formulaProperties(f).includes(p)),
   );
 
@@ -32,19 +31,10 @@ export function AtelierView({ formulas }: { formulas: BraceletFormula[] }) {
       ? formulas
       : formulas.filter((f) => formulaProperties(f).includes(activeFilter));
 
-  const propertyColors: Record<string, string> = {
-    Protection: "#5A4D45",
-    Fortune: "#B8941E",
-    Health: "#5A8060",
-    Harmony: "#7FA07A",
-    Amplification: "#C9A84C",
-    Clarity: "#7AA8C8",
-    Serenity: "#9B7BB8",
-    Love: "#E8B4C0",
-  };
+  const propertyColors: Record<string, string> = RESONANCE_COLORS;
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 pb-28 pt-32 md:px-10 md:pt-44">
+    <div className="mx-auto max-w-[1760px] px-6 pb-28 pt-32 md:px-10 md:pt-44 2xl:px-16">
       <header className="grid gap-10 border-b border-hairline-soft pb-14 md:grid-cols-[1.2fr_0.8fr] md:items-end">
         <div>
           <SectionLabel ruled>{t.atelier.eyebrow}</SectionLabel>

@@ -1,14 +1,35 @@
 // Shared domain types for Mystic Atelier.
 
-export type MetaphysicalProperty =
-  | "Protection"
-  | "Fortune"
+/**
+ * The eight intention categories from the KHORA resonance chart
+ * (财富/健康/事业/睡眠/平安/人缘/情绪/学习). A stone may carry several.
+ */
+export type ResonanceTag =
+  | "Wealth"
   | "Health"
-  | "Harmony"
-  | "Amplification"
-  | "Clarity"
-  | "Serenity"
-  | "Love";
+  | "Career"
+  | "Sleep"
+  | "Peace"
+  | "Relationships"
+  | "Emotion"
+  | "Study";
+
+/** The mineral family a stone belongs to — used as a catalog filter facet. */
+export type Material =
+  | "Quartz"
+  | "Agate"
+  | "Chalcedony"
+  | "Obsidian"
+  | "Jade"
+  | "Feldspar"
+  | "Beryl"
+  | "Garnet"
+  | "Cinnabar"
+  | "Spodumene"
+  | "Prehnite"
+  | "Rhodochrosite"
+  | "Super Seven"
+  | "Lapis Lazuli";
 
 /** A single stone in the canonical catalog (src/lib/beads.ts). */
 export interface Bead {
@@ -17,7 +38,10 @@ export interface Bead {
   name: string;
   /** Refined Western name used in headlines. */
   westernName: string;
-  metaphysicalProperty: MetaphysicalProperty;
+  /** Resonance intentions this stone is said to serve (multi-tag, chart-derived). */
+  resonance: ResonanceTag[];
+  /** Mineral family — drives the Material filter facet. */
+  material: Material;
   /** Evocative, upscale lore copy. */
   description: string;
   /** Hex accent used for orbs, badges and glows. */
@@ -28,6 +52,8 @@ export interface Bead {
   /** Physical bead diameter in millimetres. Varies by stone. */
   diameterMm: number;
   origin: string;
+  /** Approximate geological age of the stone. */
+  age: string;
   energyAlignment: string;
 }
 

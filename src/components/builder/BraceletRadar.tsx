@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BEAD_BY_SLUG, PROPERTY_ORDER } from "@/lib/beads";
+import { BEAD_BY_SLUG, RESONANCE_ORDER } from "@/lib/beads";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import type { BeadPlacement } from "@/components/builder/BraceletPreview";
 
@@ -9,17 +9,17 @@ export function BraceletRadar({ beads }: { beads: BeadPlacement[] }) {
   const { t } = useI18n();
   const total = beads.length;
 
-  // Count beads per property
+  // Count beads per resonance tag (a bead contributes to each tag it carries)
   const counts = Object.fromEntries(
-    PROPERTY_ORDER.map((p) => [p, 0]),
+    RESONANCE_ORDER.map((p) => [p, 0]),
   ) as Record<string, number>;
   for (const { slug } of beads) {
     const b = BEAD_BY_SLUG[slug];
-    if (b) counts[b.metaphysicalProperty]++;
+    if (b) b.resonance.forEach((tag) => counts[tag]++);
   }
 
   const maxCount = Math.max(...Object.values(counts), 1);
-  const activeProperties = PROPERTY_ORDER.filter((p) => counts[p] > 0).sort(
+  const activeProperties = RESONANCE_ORDER.filter((p) => counts[p] > 0).sort(
     (a, b) => counts[b] - counts[a],
   );
   const hasData = total > 0;

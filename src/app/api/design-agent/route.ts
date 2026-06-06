@@ -5,7 +5,7 @@ import { dict } from "@/lib/i18n";
 import type {
   DesignAgentRequest,
   DesignAgentResponse,
-  MetaphysicalProperty,
+  ResonanceTag,
 } from "@/lib/types";
 
 /**
@@ -22,37 +22,37 @@ import type {
  * ───────────────────────────────────────────────────────────────────────────
  */
 
-// Which stone properties each "vibe" leans toward.
-const VIBE_AFFINITY: Record<
-  DesignAgentRequest["vibe"],
-  MetaphysicalProperty[]
-> = {
-  Grounded: ["Protection", "Health"],
-  Radiant: ["Fortune", "Amplification"],
-  Tranquil: ["Serenity", "Clarity"],
-  Ambitious: ["Fortune", "Amplification", "Protection"],
-  Mystical: ["Clarity", "Serenity", "Amplification"],
+// Which resonance intentions each "vibe" leans toward.
+const VIBE_AFFINITY: Record<DesignAgentRequest["vibe"], ResonanceTag[]> = {
+  Grounded: ["Peace", "Health"],
+  Radiant: ["Wealth", "Career"],
+  Tranquil: ["Sleep", "Emotion"],
+  Ambitious: ["Wealth", "Career", "Study"],
+  Mystical: ["Emotion", "Relationships", "Study"],
 };
 
-// Keyword → property hints, scanned from the free-text intention.
-const KEYWORD_HINTS: { match: RegExp; property: MetaphysicalProperty }[] = [
-  { match: /wealth|money|abundance|prosper|success|career/i, property: "Fortune" },
-  { match: /protect|safe|shield|boundary|ground/i, property: "Protection" },
-  { match: /calm|peace|anxiet|stress|sleep|serad|serene/i, property: "Serenity" },
+// Keyword → resonance hints, scanned from the free-text intention.
+const KEYWORD_HINTS: { match: RegExp; property: ResonanceTag }[] = [
+  { match: /wealth|money|abundance|prosper|fortune/i, property: "Wealth" },
+  { match: /career|work|job|business|promotion|success/i, property: "Career" },
+  { match: /protect|safe|shield|boundary|ground|peace/i, property: "Peace" },
+  { match: /sleep|rest|insomnia|dream/i, property: "Sleep" },
   { match: /health|heal|vital|energy|strength/i, property: "Health" },
-  { match: /focus|clear|clarity|decision|mind/i, property: "Clarity" },
-  { match: /love|harmon|balance|relationship|family/i, property: "Harmony" },
-  { match: /manifest|amplif|goal|intention|power/i, property: "Amplification" },
+  { match: /focus|study|exam|learn|concentrat|clarity|mind/i, property: "Study" },
+  { match: /love|relationship|family|friend|social|charm/i, property: "Relationships" },
+  { match: /calm|anxiet|stress|emotion|mood|feeling|heart/i, property: "Emotion" },
 ];
 
 function scoreBead(
   slug: string,
-  wanted: Set<MetaphysicalProperty>,
+  wanted: Set<ResonanceTag>,
   affinities: string[],
 ): number {
   const bead = BEAD_BY_SLUG[slug];
   let score = 0;
-  if (wanted.has(bead.metaphysicalProperty)) score += 3;
+  for (const tag of bead.resonance) {
+    if (wanted.has(tag)) score += 3;
+  }
   if (affinities.includes(slug)) score += 4;
   return score;
 }
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
   await new Promise((r) => setTimeout(r, 1100));
 
   // 1. Determine desired properties from vibe + intention keywords.
-  const wanted = new Set<MetaphysicalProperty>(VIBE_AFFINITY[vibe] ?? []);
+  const wanted = new Set<ResonanceTag>(VIBE_AFFINITY[vibe] ?? []);
   for (const hint of KEYWORD_HINTS) {
     if (hint.match.test(intention)) wanted.add(hint.property);
   }
@@ -129,16 +129,17 @@ export async function POST(request: Request) {
   for (const slug of uniqueSlugs) {
     const b = BEAD_BY_SLUG[slug];
     const L = localizeBead(b, locale);
-    const propLabel = dict[locale].properties[b.metaphysicalProperty];
+    const primary = b.resonance[0];
+    const propLabel = dict[locale].properties[primary];
     rationale[slug] =
       locale === "zh"
         ? `${L.title}主司${propLabel}——${L.energyAlignment}。`
-        : `${b.westernName} anchors ${b.metaphysicalProperty.toLowerCase()} — ${b.energyAlignment}.`;
+        : `${b.westernName} anchors ${propLabel.toLowerCase()} — ${b.energyAlignment}.`;
   }
 
   const focalTitle = localizeBead(focal, locale).title;
   const response: DesignAgentResponse = {
-    braceletName: composeName(vibe, focal.metaphysicalProperty, locale),
+    braceletName: composeName(vibe, focal.resonance[0], locale),
     narrative: composeNarrative(intention, vibe, focalTitle, locale),
     beads: arranged,
     totalPrice: sequencePrice(arranged),
@@ -152,7 +153,7 @@ type Locale = "en" | "zh";
 
 function composeName(
   vibe: DesignAgentRequest["vibe"],
-  property: MetaphysicalProperty,
+  property: ResonanceTag,
   locale: Locale,
 ): string {
   if (locale === "zh") {
@@ -163,14 +164,15 @@ function composeName(
       Ambitious: "君王之",
       Mystical: "玄秘之",
     };
-    const secondZh: Partial<Record<MetaphysicalProperty, string>> = {
-      Fortune: "财运",
-      Protection: "守护",
-      Serenity: "时刻",
+    const secondZh: Partial<Record<ResonanceTag, string>> = {
+      Wealth: "财运",
+      Peace: "守护",
+      Sleep: "安眠",
       Health: "焕新",
-      Clarity: "心境",
-      Harmony: "和合",
-      Amplification: "飞升",
+      Study: "心境",
+      Relationships: "善缘",
+      Career: "登攀",
+      Emotion: "宁澜",
     };
     return `${firstZh[vibe]}${secondZh[property] ?? "共振"}`;
   }
@@ -182,14 +184,15 @@ function composeName(
     Ambitious: "The Sovereign",
     Mystical: "The Veiled",
   };
-  const second: Partial<Record<MetaphysicalProperty, string>> = {
-    Fortune: "Fortune",
-    Protection: "Ward",
-    Serenity: "Hour",
+  const second: Partial<Record<ResonanceTag, string>> = {
+    Wealth: "Fortune",
+    Peace: "Ward",
+    Sleep: "Repose",
     Health: "Renewal",
-    Clarity: "Mind",
-    Harmony: "Accord",
-    Amplification: "Ascent",
+    Study: "Mind",
+    Relationships: "Accord",
+    Career: "Ascent",
+    Emotion: "Tide",
   };
   return `${first[vibe]} ${second[property] ?? "Resonance"}`;
 }
