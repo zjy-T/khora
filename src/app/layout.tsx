@@ -6,6 +6,8 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import { SidePanels } from "@/components/cart/SidePanels";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Analytics } from "@/components/Analytics";
+import { SupportChat } from "@/components/support/SupportChat";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -53,8 +55,10 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <SidePanels />
+            <SupportChat />
           </CartProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
