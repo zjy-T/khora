@@ -43,17 +43,40 @@ const KEYWORD_HINTS: { match: RegExp; property: ResonanceTag }[] = [
   { match: /calm|anxiet|stress|emotion|mood|feeling|heart/i, property: "Emotion" },
 ];
 
+/**
+ * Score a bead against the request.
+ *
+ * Weighting matters: what the user *explicitly typed* (intention keywords) is a
+ * far stronger signal of what they want than the ambient "vibe" preset, which
+ * defaults to "Grounded" even when the user never touched it. We therefore
+ * weight intention matches well above vibe matches so a request like
+ * "I like wealth" actually surfaces Wealth stones instead of being outvoted by
+ * the default vibe's Peace/Health affinities.
+ */
+const WEIGHT_INTENTION = 6; // explicit free-text keyword match
+const WEIGHT_VIBE = 2; // ambient vibe preset match
+const WEIGHT_AFFINITY = 4; // user hand-picked this exact stone
+
+// Wrist sizing. The strand fills the bracelet's inner loop, which is the wrist
+// circumference plus a small comfort allowance (must match BuilderShell's
+// FIT_ALLOWANCE_MM so the preview and the agent agree on capacity).
+const DEFAULT_WRIST_MM = 150; // 15 cm — sensible default when unset
+const FIT_ALLOWANCE_MM = 15;
+const FALLBACK_BEAD_MM = 10;
+
 function scoreBead(
   slug: string,
-  wanted: Set<ResonanceTag>,
+  intentionTags: Set<ResonanceTag>,
+  vibeTags: Set<ResonanceTag>,
   affinities: string[],
 ): number {
   const bead = BEAD_BY_SLUG[slug];
   let score = 0;
   for (const tag of bead.resonance) {
-    if (wanted.has(tag)) score += 3;
+    if (intentionTags.has(tag)) score += WEIGHT_INTENTION;
+    else if (vibeTags.has(tag)) score += WEIGHT_VIBE;
   }
-  if (affinities.includes(slug)) score += 4;
+  if (affinities.includes(slug)) score += WEIGHT_AFFINITY;
   return score;
 }
 
@@ -70,6 +93,7 @@ export async function POST(request: Request) {
     vibe = "Grounded",
     budget = 1200,
     affinities = [],
+    wristMm = DEFAULT_WRIST_MM,
     locale = "en",
   } = body;
 
@@ -88,41 +112,56 @@ export async function POST(request: Request) {
   // Simulate the latency of a thoughtful agent.
   await new Promise((r) => setTimeout(r, 1100));
 
-  // 1. Determine desired properties from vibe + intention keywords.
-  const wanted = new Set<ResonanceTag>(VIBE_AFFINITY[vibe] ?? []);
+  // 1. Determine desired properties — intention keywords (strong) and the
+  //    ambient vibe preset (weak) are kept separate so the user's own words win.
+  const intentionTags = new Set<ResonanceTag>();
   for (const hint of KEYWORD_HINTS) {
-    if (hint.match.test(intention)) wanted.add(hint.property);
+    if (hint.match.test(intention)) intentionTags.add(hint.property);
   }
+  const vibeTags = new Set<ResonanceTag>(VIBE_AFFINITY[vibe] ?? []);
 
   // 2. Rank stones, always keeping at least a couple of grounding anchors.
   const ranked = [...BEADS]
-    .map((b) => ({ b, s: scoreBead(b.slug, wanted, affinities) }))
+    .map((b) => ({ b, s: scoreBead(b.slug, intentionTags, vibeTags, affinities) }))
     .sort((a, b) => b.s - a.s || a.b.price - b.b.price);
 
-  // 3. Compose a 6-bead loop within budget (mirror around a focal stone).
+  // 3. Build a small motif palette: the focal stone plus the next best,
+  //    budget-conscious supporting varieties (a few distinct stones).
   const focal = ranked[0].b;
-  const supports = ranked.slice(1).map((r) => r.b);
+  const supportPool = ranked.slice(1).map((r) => r.b);
 
-  const sequence: string[] = [focal.slug];
+  const motif: string[] = [focal.slug];
   let running = focal.price;
-  for (const bead of supports) {
-    if (sequence.length >= 6) break;
-    if (running + bead.price > budget && sequence.length >= 3) continue;
-    sequence.push(bead.slug);
+  for (const bead of supportPool) {
+    if (motif.length >= 5) break; // up to 5 distinct varieties
+    if (running + bead.price > budget && motif.length >= 2) continue;
+    motif.push(bead.slug);
     running += bead.price;
   }
-  // Pad to 6 by repeating the focal stone if budget was tight.
-  while (sequence.length < 6) sequence.push(focal.slug);
 
-  // Arrange symmetrically around the focal stone for a balanced loop.
-  const arranged = [
-    sequence[1] ?? focal.slug,
-    sequence[3] ?? focal.slug,
-    sequence[5] ?? focal.slug,
-    focal.slug,
-    sequence[4] ?? focal.slug,
-    sequence[2] ?? focal.slug,
-  ];
+  // 4. Fill the ENTIRE bracelet. The strand has to wrap the wrist, so we tile
+  //    the motif around the loop until the beads' cumulative diameter reaches
+  //    the inner circumference (wrist + comfort allowance). This replaces the
+  //    old fixed 6-bead loop, which left most bracelets empty.
+  const circumferenceMm = Math.max(wristMm, 80) + FIT_ALLOWANCE_MM;
+  const arranged: string[] = [];
+  let usedMm = 0;
+  for (let i = 0; usedMm < circumferenceMm && arranged.length < 60; i++) {
+    const slug = motif[i % motif.length];
+    const d = BEAD_BY_SLUG[slug]?.diameterMm ?? FALLBACK_BEAD_MM;
+    // Stop before a bead would overflow the loop (small tolerance so the ring
+    // closes snugly instead of leaving an obvious gap).
+    if (usedMm + d > circumferenceMm + 1.5 && arranged.length > 0) break;
+    arranged.push(slug);
+    usedMm += d;
+  }
+  if (arranged.length === 0) arranged.push(focal.slug);
+
+  // Centre the focal stone at the front of the loop for a balanced look.
+  const focalAt = arranged.indexOf(focal.slug);
+  if (focalAt > 0) {
+    arranged.unshift(...arranged.splice(focalAt));
+  }
 
   const uniqueSlugs = [...new Set(arranged)];
   const rationale: Record<string, string> = {};
@@ -143,6 +182,7 @@ export async function POST(request: Request) {
     narrative: composeNarrative(intention, vibe, focalTitle, locale),
     beads: arranged,
     totalPrice: sequencePrice(arranged),
+    wristMm,
     rationale,
   };
 

@@ -99,7 +99,7 @@ export default async function ProductPage({
   }, []);
 
   return (
-    <main className="mx-auto max-w-[800px] px-6 pb-32 pt-32 md:px-10 md:pt-44">
+    <main className="mx-auto max-w-[1200px] px-6 pb-32 pt-32 md:px-10 md:pt-44">
       {/* Back link */}
       <Link
         href="/builder"
@@ -109,95 +109,100 @@ export default async function ProductPage({
         The Atelier Collection
       </Link>
 
-      {/* Hero photo gallery — full width, prominent */}
-      <ProductGallery slug={slug} beads={beads} />
+      {/* Two-column hero: gallery left, details + CTA right */}
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+        {/* Hero photo gallery + composition */}
+        <div>
+          <ProductGallery slug={slug} beads={beads} />
 
-      {/* Product info — below the gallery */}
-      <div className="mt-12">
-        <span className="eyebrow">Atelier Collection</span>
-        <h1 className="display mt-4 text-4xl text-bone md:text-5xl">
-          {ed?.headline ?? formula.name}
-        </h1>
-        {ed?.tagline && (
-          <p className="mt-3 font-serif text-lg italic text-gold">
-            {ed.tagline}
-          </p>
-        )}
-        <p className="mt-6 max-w-[600px] text-sm leading-relaxed text-mist">
-          {formula.description}
-        </p>
+          {/* Stone composition */}
+          <div className="mt-12">
+            <div className="mb-6 border-b border-hairline-soft pb-5">
+              <span className="eyebrow">The Composition</span>
+              <h2 className="display mt-3 text-2xl text-bone">
+                {formula.beadSequence.length} stones · {uniqueBeads.length} varieties
+              </h2>
+            </div>
 
-        {/* Price */}
-        <div className="mt-8 border-t border-b border-hairline-soft py-6">
-          <p className="text-[0.6rem] uppercase tracking-luxe text-faint">
-            Atelier Price
-          </p>
-          <p className="mt-1 font-serif text-4xl text-bone">
-            ${formula.totalPrice.toLocaleString()}
-          </p>
-          <p className="mt-1 text-xs text-faint">
-            {formula.beadSequence.length} stones · strung on surgical-grade elastic
-          </p>
-        </div>
-
-        {/* Resonance profile */}
-        <ProductResonance beadSequence={formula.beadSequence} />
-
-        {/* CTA */}
-        <div className="mt-8">
-          <AcquireButton
-            label="Acquire This Piece"
-            item={{
-              id: formula.id,
-              kind: "curated",
-              name: ed?.headline ?? formula.name,
-              price: formula.totalPrice,
-              beadSequence: formula.beadSequence,
-              slug,
-            }}
-          />
-        </div>
-
-        <p className="mt-4 text-center text-[0.6rem] uppercase tracking-luxe text-faint">
-          Made to order · Ships in 5–7 days
-        </p>
-      </div>
-
-      {/* Stone composition */}
-      <div className="mt-24">
-        <div className="mb-8 border-b border-hairline-soft pb-6">
-          <span className="eyebrow">The Composition</span>
-          <h2 className="display mt-3 text-2xl text-bone">
-            {formula.beadSequence.length} stones · {uniqueBeads.length} varieties
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {uniqueBeads.map((bead) => {
-            const count = formula.beadSequence.filter((s) => s === bead.slug).length;
-            return (
-              <div
-                key={bead.slug}
-                className="flex flex-col items-center gap-3 border border-hairline-soft p-4 text-center"
-              >
-                <BeadOrb bead={bead} size={52} />
-                <div>
-                  <p className="text-xs text-bone">{bead.westernName}</p>
-                  <p
-                    className="mt-0.5 text-[0.55rem] uppercase tracking-luxe"
-                    style={{
-                      color: RESONANCE_COLORS[bead.resonance[0]],
-                    }}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {uniqueBeads.map((bead) => {
+                const count = formula.beadSequence.filter((s) => s === bead.slug).length;
+                return (
+                  <div
+                    key={bead.slug}
+                    className="flex flex-col items-center gap-3 border border-hairline-soft p-4 text-center"
                   >
-                    {bead.resonance[0]}
-                  </p>
-                  <p className="mt-0.5 text-[0.6rem] text-faint">
-                    ×{count}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+                    <BeadOrb bead={bead} size={52} />
+                    <div>
+                      <p className="text-xs text-bone">{bead.westernName}</p>
+                      <p
+                        className="mt-0.5 text-[0.55rem] uppercase tracking-luxe"
+                        style={{
+                          color: RESONANCE_COLORS[bead.resonance[0]],
+                        }}
+                      >
+                        {bead.resonance[0]}
+                      </p>
+                      <p className="mt-0.5 text-[0.6rem] text-faint">
+                        ×{count}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Product info — sticky on the right so the CTA stays in view */}
+        <div className="lg:sticky lg:top-32 lg:self-start">
+          <span className="eyebrow">Atelier Collection</span>
+          <h1 className="display mt-4 text-4xl text-bone md:text-5xl">
+            {ed?.headline ?? formula.name}
+          </h1>
+          {ed?.tagline && (
+            <p className="mt-3 font-serif text-lg italic text-gold">
+              {ed.tagline}
+            </p>
+          )}
+          <p className="mt-6 text-sm leading-relaxed text-mist">
+            {formula.description}
+          </p>
+
+          {/* Price */}
+          <div className="mt-8 border-t border-b border-hairline-soft py-6">
+            <p className="text-[0.6rem] uppercase tracking-luxe text-faint">
+              Atelier Price
+            </p>
+            <p className="mt-1 font-serif text-4xl text-bone">
+              ${formula.totalPrice.toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-faint">
+              {formula.beadSequence.length} stones · strung on surgical-grade elastic
+            </p>
+          </div>
+
+          {/* Resonance profile */}
+          <ProductResonance beadSequence={formula.beadSequence} />
+
+          {/* CTA */}
+          <div className="mt-8">
+            <AcquireButton
+              label="Acquire This Piece"
+              item={{
+                id: formula.id,
+                kind: "curated",
+                name: ed?.headline ?? formula.name,
+                price: formula.totalPrice,
+                beadSequence: formula.beadSequence,
+                slug,
+              }}
+            />
+          </div>
+
+          <p className="mt-4 text-center text-[0.6rem] uppercase tracking-luxe text-faint">
+            Made to order · Ships in 5–7 days
+          </p>
         </div>
       </div>
     </main>

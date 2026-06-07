@@ -80,6 +80,9 @@ export interface DesignAgentRequest {
   budget: number;
   /** Slugs the wearer feels drawn to (optional affinities). */
   affinities: string[];
+  /** Wrist circumference in mm. Determines how many beads fill the loop.
+   *  Optional — the Oracle defaults to 150 mm (15 cm) when unset. */
+  wristMm?: number;
   /** Language the Oracle should respond in. */
   locale?: "en" | "zh";
 }
@@ -90,6 +93,8 @@ export interface DesignAgentResponse {
   /** Ordered bead slugs the agent recommends. */
   beads: string[];
   totalPrice: number;
+  /** Wrist circumference (mm) the strand was sized to fill. */
+  wristMm: number;
   /** Per-bead reasoning, keyed by slug. */
   rationale: Record<string, string>;
 }

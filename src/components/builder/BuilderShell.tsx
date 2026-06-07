@@ -53,6 +53,9 @@ export function BuilderShell() {
   const handleOracle = useCallback(
     (res: DesignAgentResponse) => {
       setName(res.braceletName);
+      // Size the preview loop to the wrist the Oracle filled for, so the strand
+      // reads as a complete bracelet rather than a small floating cluster.
+      if (typeof res.wristMm === "number") setWristMm(res.wristMm);
       loadSequence(res.beads);
     },
     [loadSequence],

@@ -113,11 +113,16 @@ const en = {
     noStones: "No stones yet — add from the bench above.",
     oracleIntro:
       "Speak your intention. The Oracle — our design agent — reads the current beneath your words and composes a piece in answer.",
-    yourIntention: "Your Intention",
+    yourIntention: "Your Intention · required",
     intentionPlaceholder:
       "e.g. I want to move toward my ambitions without losing my calm…",
-    theCurrent: "The Current",
-    investment: "Investment",
+    theCurrent: "The Current · optional",
+    theCurrentHint:
+      "The overall mood the Oracle should weave around your words — a gentle tilt, not a command. Your written intention always leads.",
+    investment: "Investment · optional",
+    wristSize: "Wrist Size · optional",
+    wristSizeHint:
+      "So the Oracle fills the whole bracelet. Not sure? 15 cm suits most wrists.",
     drawnTo: "Stones You're Drawn To · optional",
     consult: "Consult the Oracle",
     consulting: "Consulting…",
@@ -425,10 +430,14 @@ const zh: Dict = {
     noStones: "尚无灵石——请从上方工台选取加入。",
     oracleIntro:
       "说出你的意念。神谕——我们的设计代理——会读懂你言语之下的潜流，以一件作品作答。",
-    yourIntention: "你的意念",
+    yourIntention: "你的意念 · 必填",
     intentionPlaceholder: "例如：我想朝着抱负前行，却不失内心的平静……",
-    theCurrent: "潜流",
-    investment: "预算",
+    theCurrent: "潜流 · 选填",
+    theCurrentHint:
+      "神谕在你言语之外所环绕的整体气韵——只是轻轻一引，而非指令。你写下的意念始终为主。",
+    investment: "预算 · 选填",
+    wristSize: "手腕尺寸 · 选填",
+    wristSizeHint: "好让神谕填满整串手链。不确定？15 厘米适合大多数手腕。",
     drawnTo: "你心生向往的灵石 · 选填",
     consult: "求问神谕",
     consulting: "正在求问……",

@@ -32,6 +32,9 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
   const [intention, setIntention] = useState("");
   const [vibe, setVibe] = useState<DesignAgentRequest["vibe"]>("Grounded");
   const [budget, setBudget] = useState(900);
+  // Wrist circumference in cm. Default 15 cm — suits most wrists and ensures the
+  // Oracle returns a strand that fills the whole bracelet.
+  const [wristCm, setWristCm] = useState(15);
   const [affinities, setAffinities] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +56,7 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
         vibe,
         budget,
         affinities,
+        wristMm: Math.round(wristCm * 10),
         locale,
       };
       const res = await fetch("/api/design-agent", {
@@ -90,6 +94,9 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
       {/* Vibe */}
       <div>
         <span className="eyebrow">{t.builder.theCurrent}</span>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          {t.builder.theCurrentHint}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {VIBES.map((v) => (
             <button
@@ -122,6 +129,28 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
           step={50}
           value={budget}
           onChange={(e) => setBudget(Number(e.target.value))}
+          className="mt-3 w-full accent-[#D4AF37]"
+        />
+      </div>
+
+      {/* Wrist size */}
+      <div>
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">{t.builder.wristSize}</span>
+          <span className="font-serif text-lg text-gold">
+            {wristCm.toFixed(1)} cm
+          </span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          {t.builder.wristSizeHint}
+        </p>
+        <input
+          type="range"
+          min={13}
+          max={20}
+          step={0.5}
+          value={wristCm}
+          onChange={(e) => setWristCm(Number(e.target.value))}
           className="mt-3 w-full accent-[#D4AF37]"
         />
       </div>
