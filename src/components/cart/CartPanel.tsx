@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
 import { BEAD_BY_SLUG } from "@/lib/beads";
 import { useI18n } from "@/components/i18n/LanguageProvider";
-import { useCart } from "@/components/cart/CartProvider";
+import { useCart, type CartItem } from "@/components/cart/CartProvider";
 import { Drawer } from "@/components/cart/Drawer";
 
 /**
@@ -15,37 +17,48 @@ import { Drawer } from "@/components/cart/Drawer";
  * strand) rather than evenly-spaced dots on a fixed ring.
  */
 const REF_MM = 10; // fallback diameter
+const PAD_PX = 4; // breathing room so beads never clip the thumbnail edge
 const TWO_PI = Math.PI * 2;
 
-function MiniLoop({ slugs, size = 64 }: { slugs: string[]; size?: number }) {
+function MiniLoop({ slugs, size = 72 }: { slugs: string[]; size?: number }) {
   const sized = slugs
     .map((slug) => ({ slug, stone: BEAD_BY_SLUG[slug] }))
     .filter((b) => b.stone)
     .map((b) => ({ slug: b.slug, stone: b.stone!, d: b.stone!.diameterMm ?? REF_MM }));
 
-  const usedMm = sized.reduce((s, b) => s + b.d, 0);
-  const maxMm = sized.reduce((m, b) => Math.max(m, b.d), REF_MM);
-
   // The beads define their own closed loop: circumference = total diameter.
-  const circ = Math.max(usedMm, 1);
+  const circ = Math.max(
+    sized.reduce((s, b) => s + b.d, 0),
+    1,
+  );
   const R = circ / TWO_PI; // loop radius (mm)
-  const S = 2 * R + maxMm; // design square side (mm), bead-tight
-  const scale = size / S; // mm → px
-  const C = S / 2;
-  const ringDia = 2 * R * scale;
 
-  // Place each bead's centre by cumulative arc length so neighbours touch.
+  // Place each bead's centre (in mm, around origin) by cumulative arc length so
+  // neighbours touch edge-to-edge.
   let acc = 0;
-  const placed = sized.map((b) => {
+  const pts = sized.map((b) => {
     const theta = -Math.PI / 2 + (acc + b.d / 2) / R;
     acc += b.d;
-    return {
-      ...b,
-      x: (C + R * Math.cos(theta)) * scale,
-      y: (C + R * Math.sin(theta)) * scale,
-      px: b.d * scale,
-    };
+    return { ...b, mx: R * Math.cos(theta), my: R * Math.sin(theta) };
   });
+
+  // Measure the TRUE bounding box (bead centres ± radii), then scale that to fit
+  // the thumbnail. This guarantees nothing clips, whatever the arrangement.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of pts) {
+    minX = Math.min(minX, p.mx - p.d / 2);
+    maxX = Math.max(maxX, p.mx + p.d / 2);
+    minY = Math.min(minY, p.my - p.d / 2);
+    maxY = Math.max(maxY, p.my + p.d / 2);
+  }
+  const contentW = Math.max(maxX - minX, 1);
+  const contentH = Math.max(maxY - minY, 1);
+  const scale = (size - PAD_PX * 2) / Math.max(contentW, contentH);
+  const cx = (minX + maxX) / 2; // content centre (mm)
+  const cy = (minY + maxY) / 2;
+  const toX = (m: number) => (m - cx) * scale + size / 2;
+  const toY = (m: number) => (m - cy) * scale + size / 2;
+  const ringDia = 2 * R * scale;
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -54,24 +67,64 @@ function MiniLoop({ slugs, size = 64 }: { slugs: string[]; size?: number }) {
         aria-hidden
         className="absolute rounded-full border border-hairline-soft"
         style={{
-          left: "50%",
-          top: "50%",
+          left: toX(0),
+          top: toY(0),
           width: ringDia,
           height: ringDia,
           transform: "translate(-50%, -50%)",
         }}
       />
-      {placed.map((b, i) => (
-        <span
-          key={`${b.slug}-${i}`}
-          className="absolute"
-          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
-        >
-          <BeadOrb bead={b.stone} size={b.px} />
-        </span>
-      ))}
+      {pts.map((b, i) => {
+        const px = b.d * scale;
+        return (
+          <span
+            key={`${b.slug}-${i}`}
+            className="absolute block"
+            style={{
+              left: toX(b.mx),
+              top: toY(b.my),
+              width: px,
+              height: px,
+              lineHeight: 0,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <BeadOrb bead={b.stone} size={px} />
+          </span>
+        );
+      })}
     </div>
   );
+}
+
+/**
+ * Cart line thumbnail. Catalog pieces (curated / community) show their real
+ * product photo — the same shot as the product page — so the cart matches what
+ * the customer saw. Custom builds have no product photo, so they fall back to
+ * the rendered bead loop. A missing/failed photo also falls back to the loop.
+ */
+function CartThumb({ item, size = 72 }: { item: CartItem; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const usePhoto = item.kind !== "custom" && !!item.slug && !failed;
+
+  if (usePhoto) {
+    return (
+      <div
+        className="relative shrink-0 overflow-hidden rounded-sm bg-obsidian"
+        style={{ width: size, height: size }}
+      >
+        <Image
+          src={`/bracelets/${item.slug}-shot-1.jpg`}
+          alt={item.name}
+          fill
+          sizes={`${size}px`}
+          className="object-cover"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  }
+  return <MiniLoop slugs={item.beadSequence} size={size} />;
 }
 
 export function CartPanel() {
@@ -127,7 +180,7 @@ export function CartPanel() {
         <ul className="space-y-7">
           {items.map((item) => (
             <li key={item.id} className="flex gap-4">
-              <MiniLoop slugs={item.beadSequence} />
+              <CartThumb item={item} />
               <div className="flex min-w-0 flex-1 flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
