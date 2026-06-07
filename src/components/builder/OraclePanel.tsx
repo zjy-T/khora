@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { localizeBead } from "@/lib/beads.i18n";
+import { WRIST_OPTIONS, DEFAULT_WRIST_MM } from "@/lib/wrist";
 
 const VIBES: DesignAgentRequest["vibe"][] = [
   "Grounded",
@@ -32,9 +33,9 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
   const [intention, setIntention] = useState("");
   const [vibe, setVibe] = useState<DesignAgentRequest["vibe"]>("Grounded");
   const [budget, setBudget] = useState(900);
-  // Wrist circumference in cm. Default 15 cm — suits most wrists and ensures the
-  // Oracle returns a strand that fills the whole bracelet.
-  const [wristCm, setWristCm] = useState(15);
+  // Wrist circumference in mm. Required first interaction — starts unselected so
+  // the wearer must pick a size before choosing stones or consulting.
+  const [wristMm, setWristMm] = useState<number | null>(null);
   const [affinities, setAffinities] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
         vibe,
         budget,
         affinities,
-        wristMm: Math.round(wristCm * 10),
+        wristMm: wristMm ?? DEFAULT_WRIST_MM,
         locale,
       };
       const res = await fetch("/api/design-agent", {
@@ -75,9 +76,49 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
     }
   }
 
+  const sizeChosen = wristMm !== null;
+
   return (
     <div className="space-y-7">
       <p className="text-sm leading-relaxed text-mist">{t.builder.oracleIntro}</p>
+
+      {/* Wrist size — the required FIRST interaction (click-select chips,
+          same as Custom Build). Everything else stays gated until it's set. */}
+      <div>
+        <span className="eyebrow">{t.builder.wristSize}</span>
+        <p className="mt-2 text-xs leading-relaxed text-faint">
+          {t.builder.wristSizeHint}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {WRIST_OPTIONS.map((mm) => {
+            const active = wristMm === mm;
+            return (
+              <button
+                key={mm}
+                type="button"
+                onClick={() => setWristMm(mm)}
+                aria-pressed={active}
+                className={`flex flex-col items-center border px-4 py-2 transition-all duration-300 ${
+                  active
+                    ? "border-gold bg-charcoal/30"
+                    : "border-hairline-soft hover:border-gold/60 hover:bg-charcoal/15"
+                }`}
+              >
+                <span
+                  className={`font-serif text-lg transition-colors ${
+                    active ? "text-gold" : "text-bone"
+                  }`}
+                >
+                  {mm / 10}
+                </span>
+                <span className="text-[0.5rem] uppercase tracking-luxe text-faint">
+                  cm
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Intention */}
       <label className="block">
@@ -133,51 +174,35 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
         />
       </div>
 
-      {/* Wrist size */}
-      <div>
-        <div className="flex items-center justify-between">
-          <span className="eyebrow">{t.builder.wristSize}</span>
-          <span className="font-serif text-lg text-gold">
-            {wristCm.toFixed(1)} cm
-          </span>
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-faint">
-          {t.builder.wristSizeHint}
-        </p>
-        <input
-          type="range"
-          min={13}
-          max={20}
-          step={0.5}
-          value={wristCm}
-          onChange={(e) => setWristCm(Number(e.target.value))}
-          className="mt-3 w-full accent-[#D4AF37]"
-        />
-      </div>
-
-      {/* Affinities */}
+      {/* Affinities — gated: a wrist size must be chosen first */}
       <div>
         <span className="eyebrow">{t.builder.drawnTo}</span>
-        <div className="mt-3 grid grid-cols-4 gap-2.5 sm:grid-cols-8">
-          {BEADS.map((bead) => {
-            const on = affinities.includes(bead.slug);
-            return (
-              <button
-                key={bead.slug}
-                onClick={() => toggleAffinity(bead.slug)}
-                title={localizeBead(bead, locale).title}
-                className={`flex items-center justify-center rounded-full p-0.5 transition-all ${
-                  on ? "ring-1 ring-gold" : "opacity-60 hover:opacity-100"
-                }`}
-              >
-                <BeadOrb bead={bead} size={34} active={on} />
-              </button>
-            );
-          })}
-        </div>
+        {sizeChosen ? (
+          <div className="mt-3 grid grid-cols-4 gap-2.5 sm:grid-cols-8">
+            {BEADS.map((bead) => {
+              const on = affinities.includes(bead.slug);
+              return (
+                <button
+                  key={bead.slug}
+                  onClick={() => toggleAffinity(bead.slug)}
+                  title={localizeBead(bead, locale).title}
+                  className={`flex items-center justify-center rounded-full p-0.5 transition-all ${
+                    on ? "ring-1 ring-gold" : "opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <BeadOrb bead={bead} size={34} active={on} />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-3 border border-dashed border-hairline-soft p-6 text-center text-xs leading-relaxed text-faint">
+            {t.builder.steps.sizeGate}
+          </p>
+        )}
       </div>
 
-      <Button onClick={consult} disabled={loading} className="w-full">
+      <Button onClick={consult} disabled={loading || !sizeChosen} className="w-full">
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" /> {t.builder.consulting}

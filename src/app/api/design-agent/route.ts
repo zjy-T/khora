@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { BEADS, BEAD_BY_SLUG, sequencePrice } from "@/lib/beads";
 import { localizeBead } from "@/lib/beads.i18n";
 import { dict } from "@/lib/i18n";
+import { DEFAULT_WRIST_MM, fillLoop } from "@/lib/wrist";
 import type {
   DesignAgentRequest,
   DesignAgentResponse,
@@ -56,13 +57,6 @@ const KEYWORD_HINTS: { match: RegExp; property: ResonanceTag }[] = [
 const WEIGHT_INTENTION = 6; // explicit free-text keyword match
 const WEIGHT_VIBE = 2; // ambient vibe preset match
 const WEIGHT_AFFINITY = 4; // user hand-picked this exact stone
-
-// Wrist sizing. The strand fills the bracelet's inner loop, which is the wrist
-// circumference plus a small comfort allowance (must match BuilderShell's
-// FIT_ALLOWANCE_MM so the preview and the agent agree on capacity).
-const DEFAULT_WRIST_MM = 150; // 15 cm — sensible default when unset
-const FIT_ALLOWANCE_MM = 15;
-const FALLBACK_BEAD_MM = 10;
 
 function scoreBead(
   slug: string,
@@ -140,21 +134,10 @@ export async function POST(request: Request) {
   }
 
   // 4. Fill the ENTIRE bracelet. The strand has to wrap the wrist, so we tile
-  //    the motif around the loop until the beads' cumulative diameter reaches
-  //    the inner circumference (wrist + comfort allowance). This replaces the
-  //    old fixed 6-bead loop, which left most bracelets empty.
-  const circumferenceMm = Math.max(wristMm, 80) + FIT_ALLOWANCE_MM;
-  const arranged: string[] = [];
-  let usedMm = 0;
-  for (let i = 0; usedMm < circumferenceMm && arranged.length < 60; i++) {
-    const slug = motif[i % motif.length];
-    const d = BEAD_BY_SLUG[slug]?.diameterMm ?? FALLBACK_BEAD_MM;
-    // Stop before a bead would overflow the loop (small tolerance so the ring
-    // closes snugly instead of leaving an obvious gap).
-    if (usedMm + d > circumferenceMm + 1.5 && arranged.length > 0) break;
-    arranged.push(slug);
-    usedMm += d;
-  }
+  //    the motif around the loop until the beads fill the inner circumference
+  //    (shared fillLoop — same behaviour as the Destiny composer). This
+  //    replaces the old fixed 6-bead loop, which left most bracelets empty.
+  const arranged = fillLoop(motif, wristMm);
   if (arranged.length === 0) arranged.push(focal.slug);
 
   // Centre the focal stone at the front of the loop for a balanced look.

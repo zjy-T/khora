@@ -8,31 +8,68 @@ import { useI18n } from "@/components/i18n/LanguageProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { Drawer } from "@/components/cart/Drawer";
 
-/** A small circular bead arrangement for a cart line. */
+/**
+ * A small bracelet thumbnail for a cart line. Mirrors the main BeadPlate
+ * preview: beads are packed edge-to-edge around a closed loop using their real
+ * millimetre diameters, so the thumbnail reads as the actual piece (a full
+ * strand) rather than evenly-spaced dots on a fixed ring.
+ */
+const REF_MM = 10; // fallback diameter
+const TWO_PI = Math.PI * 2;
+
 function MiniLoop({ slugs, size = 64 }: { slugs: string[]; size?: number }) {
-  const center = size / 2;
-  const bead = Math.max(8, Math.min(14, (size / Math.max(slugs.length, 6)) * 1.6));
-  const radius = center - bead / 2 - 1;
-  const count = Math.max(slugs.length, 1);
+  const sized = slugs
+    .map((slug) => ({ slug, stone: BEAD_BY_SLUG[slug] }))
+    .filter((b) => b.stone)
+    .map((b) => ({ slug: b.slug, stone: b.stone!, d: b.stone!.diameterMm ?? REF_MM }));
+
+  const usedMm = sized.reduce((s, b) => s + b.d, 0);
+  const maxMm = sized.reduce((m, b) => Math.max(m, b.d), REF_MM);
+
+  // The beads define their own closed loop: circumference = total diameter.
+  const circ = Math.max(usedMm, 1);
+  const R = circ / TWO_PI; // loop radius (mm)
+  const S = 2 * R + maxMm; // design square side (mm), bead-tight
+  const scale = size / S; // mm → px
+  const C = S / 2;
+  const ringDia = 2 * R * scale;
+
+  // Place each bead's centre by cumulative arc length so neighbours touch.
+  let acc = 0;
+  const placed = sized.map((b) => {
+    const theta = -Math.PI / 2 + (acc + b.d / 2) / R;
+    acc += b.d;
+    return {
+      ...b,
+      x: (C + R * Math.cos(theta)) * scale,
+      y: (C + R * Math.sin(theta)) * scale,
+      px: b.d * scale,
+    };
+  });
+
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
+      {/* Cord loop */}
       <div
         aria-hidden
         className="absolute rounded-full border border-hairline-soft"
-        style={{ inset: bead / 2 }}
+        style={{
+          left: "50%",
+          top: "50%",
+          width: ringDia,
+          height: ringDia,
+          transform: "translate(-50%, -50%)",
+        }}
       />
-      {slugs.map((slug, i) => {
-        const stone = BEAD_BY_SLUG[slug];
-        if (!stone) return null;
-        const theta = (i / count) * Math.PI * 2 - Math.PI / 2;
-        const x = center + radius * Math.cos(theta) - bead / 2;
-        const y = center + radius * Math.sin(theta) - bead / 2;
-        return (
-          <span key={`${slug}-${i}`} className="absolute" style={{ left: x, top: y }}>
-            <BeadOrb bead={stone} size={bead} />
-          </span>
-        );
-      })}
+      {placed.map((b, i) => (
+        <span
+          key={`${b.slug}-${i}`}
+          className="absolute"
+          style={{ left: b.x, top: b.y, transform: "translate(-50%, -50%)" }}
+        >
+          <BeadOrb bead={b.stone} size={b.px} />
+        </span>
+      ))}
     </div>
   );
 }

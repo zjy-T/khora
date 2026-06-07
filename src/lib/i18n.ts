@@ -139,7 +139,8 @@ const en = {
     designSaved: "Design saved",
     steps: {
       sizeTitle: "Choose your wrist size",
-      sizeHint: "Optional — pick a size and we'll show exactly how many stones fit your loop.",
+      sizeHint: "Start here — pick your wrist size and we'll show exactly how many stones fit your loop.",
+      sizeGate: "Choose your wrist size above to begin adding stones.",
       stonesTitle: "Add your stones",
       stonesHint: "Browse the collection and tap Add to string each stone onto your bracelet.",
       arrangeTitle: "Arrange & make it yours",
@@ -454,7 +455,8 @@ const zh: Dict = {
     designSaved: "已保存",
     steps: {
       sizeTitle: "选择你的手腕尺寸",
-      sizeHint: "可选——选定尺寸，我们将告诉你手环能串入多少颗灵石。",
+      sizeHint: "从这里开始——选定手腕尺寸，我们将告诉你手环能串入多少颗灵石。",
+      sizeGate: "请先在上方选择手腕尺寸，方可添加灵石。",
       stonesTitle: "添加你的灵石",
       stonesHint: "浏览灵石收藏，点击「添加」将每颗灵石串入手环。",
       arrangeTitle: "编排，成就专属",

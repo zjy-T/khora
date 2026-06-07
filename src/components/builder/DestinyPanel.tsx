@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Stars, Loader2, Users } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
 import { Button } from "@/components/ui/Button";
-import { BEAD_BY_SLUG, BEADS, sequencePrice } from "@/lib/beads";
+import { BEAD_BY_SLUG, sequencePrice } from "@/lib/beads";
+import { DEFAULT_WRIST_MM, fillLoop } from "@/lib/wrist";
 import type { Bead, DesignAgentResponse } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
-import { localizeBead } from "@/lib/beads.i18n";
 
 type ChartMethod = "western" | "chinese" | "purpleStar" | "couple";
 
@@ -87,19 +87,10 @@ export function DestinyPanel({ onResult, onShowLore }: Props) {
       slugs = [preset.slugs[0], preset2.slugs[0], preset.slugs[1], preset2.slugs[1], preset.slugs[0]];
     }
 
-    // Fill the whole bracelet (default 15 cm wrist + comfort allowance) by
-    // tiling the chart's stones around the loop, rather than a fixed 8 beads.
-    const DESTINY_WRIST_MM = 150;
-    const circumferenceMm = DESTINY_WRIST_MM + 15;
-    const beadsInLoop: string[] = [];
-    let usedMm = 0;
-    for (let i = 0; usedMm < circumferenceMm && beadsInLoop.length < 60; i++) {
-      const slug = slugs[i % slugs.length];
-      const d = BEAD_BY_SLUG[slug]?.diameterMm ?? 10;
-      if (usedMm + d > circumferenceMm + 1.5 && beadsInLoop.length > 0) break;
-      beadsInLoop.push(slug);
-      usedMm += d;
-    }
+    // Fill the whole bracelet (default 15 cm wrist) by tiling the chart's
+    // stones around the loop, rather than a fixed 8 beads. Uses the shared
+    // fillLoop so Destiny and the Oracle behave identically.
+    const beadsInLoop = fillLoop(slugs, DEFAULT_WRIST_MM);
     const rationale: Record<string, string> = {};
     slugs.forEach((slug) => {
       const bead = BEAD_BY_SLUG[slug];
@@ -121,7 +112,7 @@ export function DestinyPanel({ onResult, onShowLore }: Props) {
       narrative,
       beads: beadsInLoop,
       totalPrice: sequencePrice(beadsInLoop),
-      wristMm: DESTINY_WRIST_MM,
+      wristMm: DEFAULT_WRIST_MM,
       rationale,
     };
 

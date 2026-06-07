@@ -18,11 +18,9 @@ import { BEAD_BY_SLUG, sequencePrice, sequenceDiameterMm } from "@/lib/beads";
 import type { Bead, DesignAgentResponse } from "@/lib/types";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { useCart } from "@/components/cart/CartProvider";
+import { FIT_ALLOWANCE_MM } from "@/lib/wrist";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-
-// Comfort ease added to wrist circumference to get bracelet inner loop (mm)
-const FIT_ALLOWANCE_MM = 15;
 
 export function BuilderShell() {
   const { t, locale } = useI18n();

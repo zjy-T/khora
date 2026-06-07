@@ -10,6 +10,7 @@ import type { BeadPlacement } from "@/components/builder/BraceletPreview";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { localizeBead } from "@/lib/beads.i18n";
 import { FilterBar, type FilterGroup } from "@/components/builder/FilterBar";
+import { WRIST_OPTIONS } from "@/lib/wrist";
 
 type SavedDesign = {
   id: string;
@@ -33,8 +34,6 @@ function persistSaved(designs: SavedDesign[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(designs));
 }
-
-const WRIST_OPTIONS = [140, 150, 160, 170, 180, 190, 200] as const;
 
 /** A numbered step header — guides the user through the 1-2-3 build flow. */
 function StepHeading({
@@ -223,9 +222,12 @@ export function AlchemistPanel({
   const capacityPct = braceletMm ? Math.min((usedMm / braceletMm) * 100, 100) : 0;
   const nearLimit = braceletMm && usedMm >= braceletMm - 15 && !atCapacity;
 
+  // Wrist size is the required first interaction: no stones until it's chosen.
+  const sizeChosen = wristMm !== null;
+
   return (
     <div className="space-y-12">
-      {/* ── Step 1 · Wrist size (optional, non-blocking) ───────────────────────── */}
+      {/* ── Step 1 · Wrist size (required first step) ───────────────────────────── */}
       <section className="space-y-5">
         <StepHeading
           n={1}
@@ -309,6 +311,17 @@ export function AlchemistPanel({
           hint={t.builder.steps.stonesHint}
         />
 
+        {/* Gate: a wrist size must be chosen before any stone can be added. */}
+        {!sizeChosen ? (
+          <div className="flex flex-col items-center gap-2 border border-dashed border-hairline-soft p-10 text-center">
+            <span className="text-[0.6rem] uppercase tracking-luxe text-gold">
+              {locale === "zh" ? "第一步" : "Step One"}
+            </span>
+            <p className="max-w-xs text-xs leading-relaxed text-faint">
+              {t.builder.steps.sizeGate}
+            </p>
+          </div>
+        ) : (
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
           {/* Optional filter rail — off to the side, not a required step */}
           <aside className="lg:sticky lg:top-28 lg:w-36 lg:shrink-0 lg:self-start">
@@ -384,6 +397,7 @@ export function AlchemistPanel({
             )}
           </div>
         </div>
+        )}
       </section>
 
       {/* ── Step 3 · Arrange your bracelet ─────────────────────────────────────── */}
