@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Price } from "@/components/ui/Price";
 import { motion, AnimatePresence } from "framer-motion";
 import { Stars, Loader2, Users } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
@@ -284,7 +285,7 @@ export function DestinyPanel({ onResult, onShowLore }: Props) {
                 {t.builder.loadedIntoLoop}
               </span>
               <span className="font-serif text-xl text-gold">
-                ${result.res.totalPrice.toLocaleString()}
+                <Price amount={result.res.totalPrice} />
               </span>
             </div>
           </motion.div>

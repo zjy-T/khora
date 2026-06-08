@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Price } from "@/components/ui/Price";
 import Link from "next/link";
 import { Search as SearchIcon } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
@@ -100,7 +101,7 @@ export function SearchPanel() {
                     >
                       <span className="font-serif text-base text-bone">{L.name}</span>
                       <span className="text-xs text-gold">
-                        ${f.totalPrice.toLocaleString()}
+                        <Price amount={f.totalPrice} />
                       </span>
                     </Link>
                   </li>

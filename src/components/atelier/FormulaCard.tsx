@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Price } from "@/components/ui/Price";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, ShoppingCart, Send, X } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
@@ -127,7 +128,7 @@ export function FormulaCard({
               {t.atelier.stonesLabel(formula.beadSequence.length)}
             </p>
             <p className="mt-1 font-serif text-3xl text-gold">
-              ${formula.totalPrice.toLocaleString()}
+              <Price amount={formula.totalPrice} />
             </p>
           </div>
           <button
