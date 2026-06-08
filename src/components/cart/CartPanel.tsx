@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Price } from "@/components/ui/Price";
 import Link from "next/link";
 import Image from "next/image";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
@@ -140,7 +141,7 @@ export function CartPanel() {
             {t.cart.subtotal}
           </span>
           <span className="font-serif text-2xl text-bone">
-            ${subtotal.toLocaleString()}
+            <Price amount={subtotal} />
           </span>
         </div>
         <button className="w-full border border-bone bg-bone py-4 font-sans text-[0.65rem] uppercase tracking-luxe text-obsidian transition-colors hover:border-gold hover:bg-gold">
@@ -229,7 +230,7 @@ export function CartPanel() {
                     </button>
                   </div>
                   <span className="font-serif text-lg text-gold">
-                    ${(item.price * item.qty).toLocaleString()}
+                    <Price amount={(item.price * item.qty)} />
                   </span>
                 </div>
               </div>

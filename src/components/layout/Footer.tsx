@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 
 export function Footer() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const columns = [
     {
@@ -59,6 +59,12 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-hairline-soft pt-7 text-[0.58rem] uppercase tracking-[0.22em] text-faint md:flex-row md:items-center">
           <span>© {new Date().getFullYear()} KHORA</span>
+          <Link
+            href="/contact"
+            className="text-faint transition-colors hover:text-bone"
+          >
+            {locale === "zh" ? "联系我们" : "Contact"}
+          </Link>
           <span>{t.footer.motto}</span>
         </div>
       </div>

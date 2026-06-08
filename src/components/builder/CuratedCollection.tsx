@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Price } from "@/components/ui/Price";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { BraceletLoop } from "@/components/ui/BraceletLoop";
@@ -68,7 +69,7 @@ function CollectionCard({
 
           <div className="mt-5 flex items-end justify-between">
             <p className="font-serif text-2xl text-gold">
-              ${formula.totalPrice.toLocaleString()}
+              <Price amount={formula.totalPrice} />
             </p>
             <span className="flex items-center gap-1 text-[0.6rem] uppercase tracking-luxe text-faint transition-colors group-hover:text-gold">
               View piece

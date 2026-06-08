@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Price } from "@/components/ui/Price";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
@@ -92,7 +93,7 @@ function CuratorCard({
 
         <div className="mt-4 flex items-end justify-between">
           <p className="font-serif text-xl text-gold">
-            ${preset.totalPrice.toLocaleString()}
+            <Price amount={preset.totalPrice} />
           </p>
           <span className="flex items-center gap-1 text-[0.6rem] uppercase tracking-luxe text-faint transition-colors group-hover:text-gold">
             View piece

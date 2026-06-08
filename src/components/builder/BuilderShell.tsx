@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, useEffect } from "react";
+import { Price } from "@/components/ui/Price";
 import { motion } from "framer-motion";
 import { TabBar, type BuilderTab } from "@/components/builder/TabBar";
 import {
@@ -293,7 +294,7 @@ export function BuilderShell() {
                       {placements.length} {t.builder.stonesLower(placements.length)}
                     </p>
                     <p className="mt-1 font-serif text-3xl text-gold">
-                      ${total.toLocaleString()}
+                      <Price amount={total} />
                     </p>
                   </div>
                   <Button

@@ -16,7 +16,7 @@ export type CartItem = {
   kind: "curated" | "community" | "custom";
   /** Display name captured at add-time. */
   name: string;
-  /** Unit price in USD. */
+  /** Unit price in the base currency (CNY); converted for display via Price. */
   price: number;
   /** Ordered bead slugs — used to render the mini loop in the drawer. */
   beadSequence: string[];

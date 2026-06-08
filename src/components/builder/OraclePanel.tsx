@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Price } from "@/components/ui/Price";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
@@ -160,7 +161,7 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
         <div className="flex items-center justify-between">
           <span className="eyebrow">{t.builder.investment}</span>
           <span className="font-serif text-lg text-gold">
-            ${budget.toLocaleString()}
+            <Price amount={budget} />
           </span>
         </div>
         <input
@@ -258,7 +259,7 @@ export function OraclePanel({ onResult, onShowLore }: Props) {
                 {t.builder.loadedIntoLoop}
               </span>
               <span className="font-serif text-xl text-gold">
-                ${result.totalPrice.toLocaleString()}
+                <Price amount={result.totalPrice} />
               </span>
             </div>
           </motion.div>

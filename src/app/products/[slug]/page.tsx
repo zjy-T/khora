@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Price } from "@/components/ui/Price";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -175,7 +176,7 @@ export default async function ProductPage({
               Atelier Price
             </p>
             <p className="mt-1 font-serif text-4xl text-bone">
-              ${formula.totalPrice.toLocaleString()}
+              <Price amount={formula.totalPrice} />
             </p>
             <p className="mt-1 text-xs text-faint">
               {formula.beadSequence.length} stones · strung on surgical-grade elastic

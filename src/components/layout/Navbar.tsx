@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingCart, Search, User } from "lucide-react";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
+import { CurrencyToggle } from "@/components/i18n/CurrencyToggle";
 import { useCart } from "@/components/cart/CartProvider";
 
 export function Navbar() {
@@ -121,6 +122,7 @@ export function Navbar() {
           <span className={`h-3 w-px transition-colors duration-300 ${solid ? "bg-hairline" : "bg-white/20"}`} />
 
           <LanguageToggle />
+          <CurrencyToggle />
 
           <button
             onClick={() => openPanel("search")}
@@ -172,6 +174,7 @@ export function Navbar() {
             )}
           </button>
           <LanguageToggle />
+          <CurrencyToggle />
           <button
             className={solid ? "text-bone" : "text-white"}
             onClick={() => setOpen((v) => !v)}

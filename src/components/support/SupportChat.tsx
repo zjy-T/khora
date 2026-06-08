@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { playChime } from "@/lib/chime";
 
 // Floating live-support widget. Talks to the KHORA Inventory ops platform's
 // public CORS endpoints (the same cross-app pattern as Analytics). Messages a
 // customer sends are routed to the agent inbox at /support; agent replies come
 // back here via polling. Configure the endpoint with NEXT_PUBLIC_OPS_URL.
+//
+// Other components (e.g. the Contact page) can open this widget by dispatching
+// a `khora:open-support` window event.
 
 const OPS_URL = process.env.NEXT_PUBLIC_OPS_URL;
 
@@ -27,9 +31,16 @@ const COPY = {
     placeholder: "Write a message…",
     namePlaceholder: "Your name (optional)",
     emailPlaceholder: "Email (optional)",
-    start: "Start chat",
-    closed: "This conversation was closed. Send a message to reopen it.",
+    closed: "This conversation was resolved. Send a message to reopen it.",
     open: "Chat with us",
+    needHelp: "Need help?",
+    typing: "typing",
+    tabAlert: "💬 New reply — KHORA",
+    ratingPrompt: "How was your support experience?",
+    ratingCommentPlaceholder: "Add a comment (optional)",
+    ratingSubmit: "Submit rating",
+    ratingThanks: "Thank you for your feedback.",
+    youRated: "You rated this chat",
   },
   zh: {
     title: "在线客服",
@@ -38,9 +49,16 @@ const COPY = {
     placeholder: "输入消息…",
     namePlaceholder: "您的称呼（选填）",
     emailPlaceholder: "邮箱（选填）",
-    start: "开始对话",
     closed: "该对话已结束，发送消息可重新开启。",
     open: "联系我们",
+    needHelp: "需要帮助？",
+    typing: "正在输入",
+    tabAlert: "💬 新回复 — KHORA",
+    ratingPrompt: "您对本次客服体验的评价？",
+    ratingCommentPlaceholder: "补充评价（选填）",
+    ratingSubmit: "提交评价",
+    ratingThanks: "感谢您的反馈。",
+    youRated: "您的评价",
   },
 } as const;
 
@@ -70,12 +88,20 @@ export function SupportChat() {
   const [status, setStatus] = useState<"open" | "closed">("open");
   const [unread, setUnread] = useState(0);
   const [sending, setSending] = useState(false);
+  const [agentTyping, setAgentTyping] = useState(false);
+
+  // Rating state (collected once a chat is closed).
+  const [serverRating, setServerRating] = useState<number | null>(null);
+  const [pickRating, setPickRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [ratingDone, setRatingDone] = useState(false);
 
   const cursor = useRef<string | null>(null); // ISO of newest message seen
   const seen = useRef<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(open);
   openRef.current = open;
+  const [notify, setNotify] = useState(false); // unseen reply → tab-title flash
 
   // Merge freshly-fetched messages, de-duping by id and advancing the cursor.
   const ingest = useCallback((incoming: Msg[], initial = false) => {
@@ -85,10 +111,14 @@ export function SupportChat() {
     fresh.forEach((m) => seen.current.add(m.id));
     cursor.current = fresh[fresh.length - 1].createdAt;
     setMessages((prev) => [...prev, ...fresh]);
-    // Badge agent replies that arrive while the panel is closed.
-    if (!initial && !openRef.current) {
-      const agentCount = fresh.filter((m) => m.sender === "agent").length;
-      if (agentCount) setUnread((u) => u + agentCount);
+
+    if (initial) return;
+    const agentMsgs = fresh.filter((m) => m.sender === "agent").length;
+    if (agentMsgs) {
+      // Audible + visual alert for an incoming reply.
+      playChime();
+      if (!openRef.current) setUnread((u) => u + agentMsgs);
+      if (!openRef.current || document.hidden) setNotify(true);
     }
   }, []);
 
@@ -104,6 +134,8 @@ export function SupportChat() {
       const data = await res.json();
       if (data.exists) setStarted(true);
       if (data.status) setStatus(data.status);
+      setAgentTyping(!!data.agentTyping);
+      if (typeof data.rating === "number") setServerRating(data.rating);
       ingest((data.messages as Msg[]) ?? [], cursor.current === null);
     } catch {
       /* offline — try again next tick */
@@ -119,19 +151,50 @@ export function SupportChat() {
   useEffect(() => {
     if (!OPS_URL) return;
     if (!open && !started) return;
-    const interval = open ? 4000 : 12000;
+    const interval = open ? 3000 : 12000;
     const id = setInterval(poll, interval);
     return () => clearInterval(id);
   }, [open, started, poll]);
 
-  // Clear the badge and scroll to the latest when the panel opens.
+  // Open via a global event (e.g. the Contact page "Talk to support" button).
   useEffect(() => {
-    if (open) setUnread(0);
+    const handler = () => setOpen(true);
+    window.addEventListener("khora:open-support", handler);
+    return () => window.removeEventListener("khora:open-support", handler);
+  }, []);
+
+  // Clear badge/notify and scroll to the latest when the panel opens.
+  useEffect(() => {
+    if (open) {
+      setUnread(0);
+      setNotify(false);
+    }
   }, [open]);
 
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages, open]);
+  }, [messages, open, agentTyping]);
+
+  // Flash the browser tab title while there's an unseen reply and the tab is
+  // hidden; restore the original title on return.
+  useEffect(() => {
+    if (!notify) return;
+    const original = document.title;
+    let on = false;
+    const id = setInterval(() => {
+      document.title = on ? original : t.tabAlert;
+      on = !on;
+    }, 1000);
+    const onVisible = () => {
+      if (!document.hidden) setNotify(false);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.title = original;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [notify, t.tabAlert]);
 
   const send = useCallback(async () => {
     const body = input.trim();
@@ -164,24 +227,62 @@ export function SupportChat() {
     }
   }, [input, name, email, sending, poll]);
 
+  const submitRating = useCallback(async () => {
+    if (!OPS_URL || !pickRating) return;
+    try {
+      const res = await fetch(`${OPS_URL}/api/support/rating`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({
+          sessionId: sessionId(),
+          rating: pickRating,
+          comment: ratingComment.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        setServerRating(pickRating);
+        setRatingDone(true);
+      }
+    } catch {
+      /* ignore — they can retry */
+    }
+  }, [pickRating, ratingComment]);
+
   if (!OPS_URL) return null;
+
+  const showRating = status === "closed" && serverRating === null && !ratingDone;
+  const ratedValue = serverRating ?? (ratingDone ? pickRating : null);
 
   return (
     <>
       {/* Launcher */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={t.open}
-        className="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full bg-bone text-obsidian shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-      >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
-        {!open && unread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 rounded-full bg-gold text-[#faf8f4] text-[11px] font-medium flex items-center justify-center tabular-nums">
-            {unread}
+      <div className="fixed bottom-5 right-5 z-[60] flex items-center gap-3">
+        {!open && (
+          <span className="hidden md:inline-block rounded-full bg-bone/90 text-obsidian text-xs font-medium px-3.5 py-2 shadow-lg pointer-events-none">
+            {t.needHelp}
           </span>
         )}
-      </button>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label={t.open}
+          className="relative h-16 w-16 rounded-full bg-gold text-[#faf8f4] shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        >
+          {/* Pulsing ring to draw the eye (only when closed). */}
+          {!open && (
+            <span className="absolute inset-0 rounded-full bg-gold animate-ping opacity-30" />
+          )}
+          <span className="relative">
+            {open ? <X size={26} /> : <MessageCircle size={26} />}
+          </span>
+          {!open && unread > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-bone text-obsidian text-xs font-semibold flex items-center justify-center tabular-nums shadow">
+              {unread}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Panel */}
       {open && (
@@ -199,10 +300,58 @@ export function SupportChat() {
                 {m.body}
               </Bubble>
             ))}
-            {status === "closed" && (
+            {agentTyping && <TypingBubble label={t.typing} />}
+            {status === "closed" && !showRating && ratedValue === null && (
               <p className="text-[11px] text-mist text-center mt-1">{t.closed}</p>
             )}
           </div>
+
+          {/* Rating prompt once the chat is resolved. */}
+          {showRating && (
+            <div className="px-4 py-3 border-t border-hairline bg-charcoal/60">
+              <p className="text-xs text-mist mb-2">{t.ratingPrompt}</p>
+              <div className="flex items-center gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setPickRating(i)}
+                    aria-label={`${i} star`}
+                    className={`text-2xl leading-none transition-colors ${
+                      i <= pickRating ? "text-gold" : "text-mist hover:text-gold-soft"
+                    }`}
+                  >
+                    {i <= pickRating ? "★" : "☆"}
+                  </button>
+                ))}
+              </div>
+              <input
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+                placeholder={t.ratingCommentPlaceholder}
+                className="w-full bg-charcoal border border-hairline rounded px-3 py-2 text-sm text-bone placeholder:text-mist focus:outline-none focus:border-gold mb-2"
+              />
+              <button
+                type="button"
+                onClick={submitRating}
+                disabled={!pickRating}
+                className="w-full bg-gold text-[#faf8f4] text-sm rounded py-2 disabled:opacity-40 transition-opacity"
+              >
+                {t.ratingSubmit}
+              </button>
+            </div>
+          )}
+          {ratedValue !== null && (
+            <div className="px-4 py-3 border-t border-hairline bg-charcoal/60 text-center">
+              <p className="text-xs text-mist mb-1">
+                {ratingDone ? t.ratingThanks : t.youRated}
+              </p>
+              <p className="text-gold text-lg leading-none">
+                {"★".repeat(ratedValue)}
+                <span className="text-mist">{"★".repeat(5 - ratedValue)}</span>
+              </p>
+            </div>
+          )}
 
           {/* Optional identity, only before the first message. */}
           {!started && (
@@ -269,6 +418,23 @@ function Bubble({
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+function TypingBubble({ label }: { label: string }) {
+  return (
+    <div className="self-start bg-charcoal text-mist rounded-2xl rounded-bl-md border border-hairline px-3.5 py-2.5 flex items-center gap-1.5">
+      <span className="text-xs">{label}</span>
+      <span className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-mist animate-bounce"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
+      </span>
     </div>
   );
 }
