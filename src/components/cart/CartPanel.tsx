@@ -8,8 +8,10 @@ import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { BeadOrb } from "@/components/beads/BeadOrb";
 import { BEAD_BY_SLUG } from "@/lib/beads";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { useCurrency } from "@/components/i18n/CurrencyProvider";
 import { useCart, type CartItem } from "@/components/cart/CartProvider";
 import { Drawer } from "@/components/cart/Drawer";
+import { startCheckout } from "@/lib/checkout-client";
 
 /**
  * A small bracelet thumbnail for a cart line. Mirrors the main BeadPlate
@@ -130,8 +132,26 @@ function CartThumb({ item, size = 72 }: { item: CartItem; size?: number }) {
 
 export function CartPanel() {
   const { t } = useI18n();
+  const { currency } = useCurrency();
   const { items, subtotal, count, setQty, removeItem, panel, closePanel } = useCart();
   const open = panel === "cart";
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function handleCheckout() {
+    setCheckingOut(true);
+    setNotice(null);
+    const res = await startCheckout(items, currency);
+    if (!res.ok) {
+      setNotice(
+        res.reason === "unconfigured"
+          ? t.cart.checkoutSoon
+          : t.cart.checkoutError,
+      );
+      setCheckingOut(false);
+    }
+    // On success the browser redirects to Stripe, so no state reset needed.
+  }
 
   const footer =
     items.length > 0 ? (
@@ -144,9 +164,18 @@ export function CartPanel() {
             <Price amount={subtotal} />
           </span>
         </div>
-        <button className="w-full border border-bone bg-bone py-4 font-sans text-[0.65rem] uppercase tracking-luxe text-obsidian transition-colors hover:border-gold hover:bg-gold">
-          {t.cart.checkout}
+        <button
+          onClick={handleCheckout}
+          disabled={checkingOut}
+          className="w-full border border-bone bg-bone py-4 font-sans text-[0.65rem] uppercase tracking-luxe text-obsidian transition-colors hover:border-gold hover:bg-gold disabled:opacity-50"
+        >
+          {checkingOut ? t.cart.checkoutLoading : t.cart.checkout}
         </button>
+        {notice && (
+          <p className="text-center text-[0.6rem] uppercase tracking-luxe text-gold">
+            {notice}
+          </p>
+        )}
         <p className="text-center text-[0.6rem] uppercase tracking-luxe text-faint">
           {t.cart.shippingNote}
         </p>
