@@ -16,6 +16,7 @@ type Order = {
   shippingAddress: string | null;
   placedAt: string;
   items: { name: string; qty: number }[];
+  emailed?: boolean;
 };
 
 const COPY = {
@@ -128,7 +129,7 @@ export function OrderSuccess() {
             </h1>
           </div>
           <p className="mt-4 text-sm text-mist">
-            {t.thanks} {t.emailed}
+            {t.thanks} {order.emailed ? t.emailed : ""}
           </p>
 
           <div className="mt-10 border border-hairline">
