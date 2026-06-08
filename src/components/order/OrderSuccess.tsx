@@ -17,6 +17,8 @@ type Order = {
   placedAt: string;
   items: { name: string; qty: number }[];
   emailed?: boolean;
+  paymentStatus?: string;
+  paymentProvider?: string | null;
 };
 
 const COPY = {
@@ -27,10 +29,16 @@ const COPY = {
     order: "Order",
     items: "Items",
     total: "Total",
+    payment: "Payment",
+    paid: "Paid",
     shipTo: "Shipping to",
     emailed: "A confirmation has been sent to your email.",
     continue: "Continue exploring",
     missing: "We couldn't find this order. If you were charged, your confirmation email has the details.",
+    nextTitle: "What happens next",
+    next1: "Your piece is made to order — we're composing it now.",
+    next2: "We'll email a separate shipping confirmation with tracking, usually within 5–7 business days.",
+    next3: "Need a change or refund? Reply to your confirmation email or use live chat with your order number.",
   },
   zh: {
     confirmedTitle: "订单已确认",
@@ -39,10 +47,16 @@ const COPY = {
     order: "订单",
     items: "商品",
     total: "合计",
+    payment: "支付",
+    paid: "已支付",
     shipTo: "寄送至",
     emailed: "确认邮件已发送至您的邮箱。",
     continue: "继续探索",
     missing: "未能找到此订单。如已扣款，确认邮件中包含详情。",
+    nextTitle: "接下来",
+    next1: "您的作品为接单定制 —— 我们正在为您编排制作。",
+    next2: "发货后我们将另发一封含物流单号的发货确认邮件，通常在 5–7 个工作日内。",
+    next3: "需要修改或退款？回复确认邮件，或在线客服中提供您的订单号。",
   },
 } as const;
 
@@ -153,6 +167,16 @@ export function OrderSuccess() {
               <span className="eyebrow">{t.total}</span>
               <span className="font-serif text-2xl text-bone">{order.total}</span>
             </div>
+            <div className="flex items-center justify-between border-t border-hairline px-6 py-4">
+              <span className="eyebrow">{t.payment}</span>
+              <span className="text-sm text-bone">
+                <span className="text-positive">● </span>
+                {t.paid}
+                {order.paymentProvider
+                  ? ` · ${order.paymentProvider[0].toUpperCase()}${order.paymentProvider.slice(1)}`
+                  : ""}
+              </span>
+            </div>
           </div>
 
           {order.shippingAddress && (
@@ -165,14 +189,23 @@ export function OrderSuccess() {
               </div>
               <iframe
                 title="Shipping location"
-                className="h-48 w-full border-0 border-t border-hairline grayscale"
+                className="h-48 w-full border-0 border-t border-hairline"
                 loading="lazy"
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(
                   order.shippingAddress.replace(/\n/g, ", "),
-                )}&z=12&output=embed`}
+                )}&z=15&output=embed`}
               />
             </div>
           )}
+
+          <div className="mt-6 border border-hairline px-6 py-5">
+            <p className="eyebrow mb-3">{t.nextTitle}</p>
+            <ul className="space-y-2 text-sm leading-relaxed text-mist">
+              <li>— {t.next1}</li>
+              <li>— {t.next2}</li>
+              <li>— {t.next3}</li>
+            </ul>
+          </div>
 
           <Link
             href="/"
