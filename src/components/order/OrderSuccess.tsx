@@ -38,7 +38,12 @@ const COPY = {
     nextTitle: "What happens next",
     next1: "Your piece is made to order — we're composing it now.",
     next2: "We'll email a separate shipping confirmation with tracking, usually within 5–7 business days.",
-    next3: "Need a change or refund? Reply to your confirmation email or use live chat with your order number.",
+    next3: "Need a change or refund? Request it below — we'll be in touch.",
+    requestCta: "Request a change or refund",
+    requestPlaceholder: "Tell us what you'd like to change (or why you'd like a refund)…",
+    requestSubmit: "Send request",
+    requestSent: "Request received — we'll follow up by email or live chat shortly.",
+    policies: "Shipping & Returns",
   },
   zh: {
     confirmedTitle: "订单已确认",
@@ -56,7 +61,12 @@ const COPY = {
     nextTitle: "接下来",
     next1: "您的作品为接单定制 —— 我们正在为您编排制作。",
     next2: "发货后我们将另发一封含物流单号的发货确认邮件，通常在 5–7 个工作日内。",
-    next3: "需要修改或退款？回复确认邮件，或在线客服中提供您的订单号。",
+    next3: "需要修改或退款？请在下方提交，我们会尽快与您联系。",
+    requestCta: "申请修改或退款",
+    requestPlaceholder: "请告诉我们您希望修改的内容（或退款原因）…",
+    requestSubmit: "提交申请",
+    requestSent: "已收到您的申请 —— 我们将很快通过邮件或在线客服与您联系。",
+    policies: "配送与退换",
   },
 } as const;
 
@@ -69,6 +79,38 @@ export function OrderSuccess() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [state, setState] = useState<"loading" | "done" | "missing">("loading");
+  const [reqOpen, setReqOpen] = useState(false);
+  const [reqText, setReqText] = useState("");
+  const [reqSent, setReqSent] = useState(false);
+  const [reqSending, setReqSending] = useState(false);
+
+  async function submitRequest() {
+    const reason = reqText.trim();
+    if (!reason || !OPS_URL || !sessionId) return;
+    setReqSending(true);
+    let khoraSid: string | undefined;
+    try {
+      khoraSid = localStorage.getItem("khora_sid") ?? undefined;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const res = await fetch(`${OPS_URL}/api/order/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({ stripeSessionId: sessionId, sessionId: khoraSid, reason }),
+      });
+      if (res.ok) {
+        setReqSent(true);
+        setReqOpen(false);
+      }
+    } catch {
+      /* leave form open to retry */
+    } finally {
+      setReqSending(false);
+    }
+  }
 
   useEffect(() => {
     if (!sessionId || !OPS_URL) {
@@ -205,14 +247,55 @@ export function OrderSuccess() {
               <li>— {t.next2}</li>
               <li>— {t.next3}</li>
             </ul>
+
+            {/* Request a change / refund */}
+            <div className="mt-5 border-t border-hairline pt-4">
+              {reqSent ? (
+                <p className="text-sm text-positive">{t.requestSent}</p>
+              ) : !reqOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setReqOpen(true)}
+                  className="text-[0.7rem] uppercase tracking-luxe text-bone underline-offset-4 hover:text-gold hover:underline"
+                >
+                  {t.requestCta}
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <textarea
+                    value={reqText}
+                    onChange={(e) => setReqText(e.target.value)}
+                    rows={3}
+                    placeholder={t.requestPlaceholder}
+                    className="w-full resize-none border border-hairline bg-transparent px-3 py-2 text-sm text-bone placeholder:text-faint focus:border-gold focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={submitRequest}
+                    disabled={reqSending || !reqText.trim()}
+                    className="bg-bone px-6 py-2.5 text-[0.65rem] uppercase tracking-luxe text-obsidian transition-colors hover:bg-gold disabled:opacity-50"
+                  >
+                    {t.requestSubmit}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          <Link
-            href="/"
-            className="mt-10 inline-block bg-gold px-8 py-3.5 text-[0.78rem] uppercase tracking-[0.18em] text-[#faf8f4] transition-all hover:tracking-[0.22em]"
-          >
-            {t.continue}
-          </Link>
+          <div className="mt-10 flex items-center gap-6">
+            <Link
+              href="/"
+              className="inline-block bg-gold px-8 py-3.5 text-[0.78rem] uppercase tracking-[0.18em] text-[#faf8f4] transition-all hover:tracking-[0.22em]"
+            >
+              {t.continue}
+            </Link>
+            <Link
+              href="/shipping-returns"
+              className="text-[0.7rem] uppercase tracking-luxe text-mist transition-colors hover:text-gold"
+            >
+              {t.policies}
+            </Link>
+          </div>
         </div>
       )}
     </section>

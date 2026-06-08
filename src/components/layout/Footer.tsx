@@ -65,6 +65,12 @@ export function Footer() {
           >
             {locale === "zh" ? "联系我们" : "Contact"}
           </Link>
+          <Link
+            href="/shipping-returns"
+            className="text-faint transition-colors hover:text-bone"
+          >
+            {locale === "zh" ? "配送与退换" : "Shipping & Returns"}
+          </Link>
           <span>{t.footer.motto}</span>
         </div>
       </div>
