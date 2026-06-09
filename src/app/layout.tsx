@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/components/i18n/LanguageProvider";
 import { CurrencyProvider } from "@/components/i18n/CurrencyProvider";
+import { CustomerProvider } from "@/components/account/CustomerProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { SidePanels } from "@/components/cart/SidePanels";
 import { Navbar } from "@/components/layout/Navbar";
@@ -52,6 +53,7 @@ export default function RootLayout({
       <body className="min-h-full bg-obsidian text-bone flex flex-col antialiased">
         <LanguageProvider>
           <CurrencyProvider>
+          <CustomerProvider>
           <CartProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
@@ -59,6 +61,7 @@ export default function RootLayout({
             <SidePanels />
             <SupportChat />
           </CartProvider>
+          </CustomerProvider>
           </CurrencyProvider>
         </LanguageProvider>
         <Analytics />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { useI18n } from "@/components/i18n/LanguageProvider";
 import { useCart } from "@/components/cart/CartProvider";
+import { useCustomer } from "@/components/account/CustomerProvider";
 
 const OPS_URL = process.env.NEXT_PUBLIC_OPS_URL;
 
@@ -44,6 +45,9 @@ const COPY = {
     requestSubmit: "Send request",
     requestSent: "Request received — we'll follow up by email or live chat shortly.",
     policies: "Shipping & Returns",
+    accountTitle: "Track this order",
+    accountBody: "Create a free account with your email to follow this order and find it again later.",
+    accountCta: "Create account / sign in",
   },
   zh: {
     confirmedTitle: "订单已确认",
@@ -67,6 +71,9 @@ const COPY = {
     requestSubmit: "提交申请",
     requestSent: "已收到您的申请 —— 我们将很快通过邮件或在线客服与您联系。",
     policies: "配送与退换",
+    accountTitle: "追踪此订单",
+    accountBody: "用邮箱创建免费账户，即可追踪本订单并随时再次查看。",
+    accountCta: "创建账户 / 登录",
   },
 } as const;
 
@@ -75,7 +82,8 @@ export function OrderSuccess() {
   const t = COPY[locale] ?? COPY.en;
   const params = useSearchParams();
   const sessionId = params.get("session_id");
-  const { clear } = useCart();
+  const { clear, openPanel } = useCart();
+  const { customer } = useCustomer();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [state, setState] = useState<"loading" | "done" | "missing">("loading");
@@ -187,6 +195,22 @@ export function OrderSuccess() {
           <p className="mt-4 text-sm text-mist">
             {t.thanks} {order.emailed ? t.emailed : ""}
           </p>
+
+          {!customer && (
+            <div className="mt-8 flex flex-col gap-3 border border-gold/40 bg-gold/5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-serif text-lg text-bone">{t.accountTitle}</p>
+                <p className="mt-1 text-sm text-mist">{t.accountBody}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => openPanel("profile")}
+                className="shrink-0 bg-gold px-6 py-3 text-[0.7rem] uppercase tracking-luxe text-[#faf8f4] transition-all hover:tracking-[0.2em]"
+              >
+                {t.accountCta}
+              </button>
+            </div>
+          )}
 
           <div className="mt-10 border border-hairline">
             <div className="flex items-baseline justify-between border-b border-hairline px-6 py-4">
