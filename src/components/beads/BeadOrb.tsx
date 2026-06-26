@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Bead } from "@/lib/types";
+import { getBlur } from "@/lib/blur-data";
 
 type Props = {
   bead: Bead;
@@ -11,10 +12,6 @@ type Props = {
   priority?: boolean;
 };
 
-/**
- * A single crystal bead rendered as a polished circular orb from its photo.
- * No colored glow — just the bead image with a glassy highlight.
- */
 export function BeadOrb({
   bead,
   size = 72,
@@ -22,6 +19,8 @@ export function BeadOrb({
   className = "",
   priority = false,
 }: Props) {
+  const blur = getBlur(bead.image);
+
   return (
     <span
       className={`relative inline-block shrink-0 rounded-full ${className}`}
@@ -39,6 +38,7 @@ export function BeadOrb({
         height={size}
         sizes={`${size}px`}
         priority={priority}
+        {...(blur ? { placeholder: "blur" as const, blurDataURL: blur } : {})}
         className="h-full w-full rounded-full object-cover"
         style={{ filter: "saturate(1.05) contrast(1.02)" }}
       />

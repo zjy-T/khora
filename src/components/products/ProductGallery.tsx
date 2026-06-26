@@ -50,6 +50,7 @@ export function ProductGallery({ slug, beads }: Props) {
             src={active.src}
             alt={`${slug} bracelet — ${active.label}`}
             fill
+            sizes="(min-width: 768px) 50vw, 100vw"
             className="object-cover"
             priority
             onError={() => markFailed(active.src)}
@@ -80,6 +81,7 @@ export function ProductGallery({ slug, beads }: Props) {
                   src={shot.src}
                   alt={shot.label}
                   fill
+                  sizes="10vw"
                   className="object-cover"
                   onError={() => markFailed(shot.src)}
                 />

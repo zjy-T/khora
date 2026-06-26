@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { blurData } from "@/lib/blur-data";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -12,11 +14,16 @@ export function Hero() {
   return (
     <section className="relative h-screen min-h-[620px] overflow-hidden">
       {/* Full-bleed image */}
-      <img
+      <Image
         src="/hero.jpg"
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        fill
+        priority
+        sizes="100vw"
+        placeholder="blur"
+        blurDataURL={blurData["/hero.jpg"]}
+        className="object-cover object-center"
       />
 
       {/* Main overlay — lighter in the middle to show the image */}

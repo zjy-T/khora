@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { blurData } from "@/lib/blur-data";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -11,11 +13,15 @@ export function ClosingInvitation() {
 
   return (
     <section className="relative overflow-hidden">
-      <img
+      <Image
         src="/closing.jpg"
         alt=""
         aria-hidden
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        fill
+        sizes="100vw"
+        placeholder="blur"
+        blurDataURL={blurData["/closing.jpg"]}
+        className="object-cover object-center"
       />
       <div
         aria-hidden

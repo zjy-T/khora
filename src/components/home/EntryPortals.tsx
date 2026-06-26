@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useI18n } from "@/components/i18n/LanguageProvider";
+import { blurData } from "@/lib/blur-data";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -58,10 +60,14 @@ export function EntryPortals() {
               href={p.href}
               className={`group relative flex ${p.minH} h-full flex-col justify-end overflow-hidden`}
             >
-              <img
+              <Image
                 src={p.image}
                 alt={labels[i].title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.03]"
+                fill
+                sizes="(min-width: 768px) 58vw, 100vw"
+                placeholder="blur"
+                blurDataURL={blurData[p.image]}
+                className="object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.03]"
                 style={{ objectPosition: p.imagePosition }}
               />
 
